@@ -1,0 +1,8 @@
+pdfplumber==0.11.2
+pyodbc==5.1.0
+numpy==1.26.4
+pandas==2.2.2
+google-generativeai==0.8.3
+langgraph
+fastapi
+uvicorn
