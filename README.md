@@ -1,104 +1,79 @@
-# 🧠 ATS Resume Intelligence Platform
+# 🧠 ATS Resume Intelligence Platform (Agentic + AI Interview Evaluation)
 
-An **AI-powered Applicant Tracking System (ATS)** that parses resumes, stores semantic embeddings, and intelligently matches candidates to job descriptions using **LLMs + pgvector + RAG-style retrieval**.
+An end-to-end **AI-powered Applicant Tracking + Career Intelligence System** that
+parses resumes, stores semantic embeddings, matches candidates to job descriptions,
+and evaluates interview readiness using **LLM Agents + LangGraph**.
 
-Built with **FastAPI, Gemini (Google Generative AI), Supabase (PostgreSQL + pgvector), and LangGraph**.
+Built with **FastAPI**, **Groq + Gemini**, **Supabase (pgvector)**, and **LangGraph**.
 
 ---
 
 ## 🚀 Key Features
 
-### 📄 Resume Upload & Parsing
-- Upload PDF resumes
-- Extracts:
-  - Candidate name
-  - Email & phone
-  - Primary role & domain
-  - Experience & education
-  - Skills (structured)
-- Uses **Gemini LLM** for accurate parsing
-- Stores results in **Supabase (PostgreSQL)**
+### 📄 1. Resume Upload & Parsing
+- Upload PDF resume
+- Extracts structured fields:
+  - Name, Email, Phone
+  - Primary Role & Domain
+  - Experience & Education
+  - Skills (JSON structured)
+- Powered by **Groq + Gemini LLM**
+- Retry-safe JSON enforcement (LangGraph)
 
 ---
 
-### 🧠 Semantic Embeddings (pgvector)
-- Resume content converted into **768-dim embeddings**
-- Generated using **Gemini text-embedding-004**
-- Stored in PostgreSQL via **pgvector**
-- Enables **semantic similarity search**
+### 🧠 2. Semantic Embeddings (pgvector)
+- Resume text → Embeddings (768-dim)
+- Stored in Supabase PostgreSQL
+- Query via pgvector similarity search
+- Used for candidate–JD matching
 
 ---
 
-### 🎯 Job Description Matching
-- Paste a Job Description
-- JD → embedding → similarity search
-- Retrieves **Top-K most relevant candidates**
-- Optional **hard domain filtering**
-- Results ranked by **vector similarity**
-- Each candidate scored using **Gemini evaluation**
+### 🎯 3. Job Description (JD) Matching
+- Paste JD → auto-embeds & compares
+- Matches against **66+ stored resumes**
+- Optional domain-based filtering
+- Outputs:
+  - Similarity score
+  - Strengths & gaps
+  - Interview question suggestions
 
 ---
 
-### 🔁 Resilient Resume Parsing (LangGraph)
-- Uses **LangGraph workflow**
-- Retry-safe parsing if JSON fails
-- Structured state transitions:
-  - PDF extraction
-  - LLM parsing
-  - Embedding generation
-  - Database storage
+### 🧩 4. Agentic Self Evaluation (New)
+Upload your **own resume + JD** → Runs a multi-agent evaluation:
+
+| Agent | Purpose |
+|-------|----------|
+| Self Evaluation Agent | Extract, parse, match, score |
+| Decision Agent | Classifies: **Low / Medium / High** readiness |
+| Confidence Agent | (<50) Fix fundamentals + build project plan |
+| Gap Analysis Agent | (50-79) Targeted improvement roadmap |
+| Interview Prep Agent | (≥80) Advanced role-focused prep |
+
+🧾 Output:
+- Fit Score out of 100
+- Strengths & Skill Gaps
+- Personalized Learning Roadmap
+- Confidence feedback
+- Practice interview questions *(score ≥ 60 only)*
 
 ---
 
-### 🔍 Self Evaluation
-- Upload your own resume + JD
-- Get:
-  - Fit score (0–100)
-  - Strengths
-  - Skill gaps
-  - Interview questions
-- **No data stored** (privacy-safe)
+### 🎙️ 5. Interactive Interview Evaluation Agent (New)
+Simulates a **live interview feedback loop**:
+
+User answers → Agent evaluates on:
+✔ Accuracy, clarity, relevance  
+✔ Strengths & weaknesses  
+✔ Score (0-100)  
+✔ Follow-up question  
+✔ Difficulty adjusts dynamically
+
+📌 *Low scorers (<60) are NOT given questions — only improvement feedback.*
 
 ---
 
-
-
----
-
-## 🧰 Tech Stack
-
-### Backend
-- **FastAPI** (Python)
-- **LangGraph** – resilient LLM workflows
-- **Google Gemini**
-  - `gemini-2.5-flash-lite` (parsing & evaluation)
-  - `text-embedding-004` (embeddings)
-
-### Database
-- **Supabase**
-  - PostgreSQL
-  - pgvector extension
-
-### Frontend
-- HTML + Tailwind CSS
-- Vanilla JavaScript
-- Responsive ATS-style UI
-
----
-
-## 📦 Database Schema (Core Tables)
-
-- `candidates_parsed`
-  - Candidate details
-  - Resume embedding (pgvector)
-- `candidate_skills`
-  - Normalized skills
-- `profiles`
-  - Extended profile text + embedding
-- `resumes_raw`
-  - Uploaded files metadata
-
----
-
- 
+## 🧱 System Architecture
 
