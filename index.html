@@ -1,0 +1,3050 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ATS Resume Intelligence | AI-Powered Resume Analysis</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Poppins:wght@500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        dark: {
+                            50: '#f8fafc',
+                            100: '#f1f5f9',
+                            200: '#e2e8f0',
+                            300: '#cbd5e1',
+                            400: '#94a3b8',
+                            500: '#64748b',
+                            600: '#475569',
+                            700: '#334155',
+                            800: '#1e293b',
+                            900: '#0f172a',
+                            950: '#020617',
+                        },
+                        primary: {
+                            50: '#eff6ff',
+                            100: '#dbeafe',
+                            200: '#bfdbfe',
+                            300: '#93c5fd',
+                            400: '#60a5fa',
+                            500: '#3b82f6',
+                            600: '#2563eb',
+                            700: '#1d4ed8',
+                            800: '#1e40af',
+                            900: '#1e3a8a',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(-45deg, #0f172a, #1e293b, #0c0a20, #1e1b4b, #0f172a);
+            background-size: 400% 400%;
+            animation: gradientBG 15s ease infinite;
+            min-height: 100vh;
+            color: #e2e8f0;
+        }
+
+        @keyframes gradientBG {
+            0% {
+                background-position: 0% 50%;
+            }
+            50% {
+                background-position: 100% 50%;
+            }
+            100% {
+                background-position: 0% 50%;
+            }
+        }
+
+        /* Particle effect overlay */
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: 
+                radial-gradient(circle at 20% 30%, rgba(59, 130, 246, 0.15) 0%, transparent 50%),
+                radial-gradient(circle at 80% 70%, rgba(139, 92, 246, 0.1) 0%, transparent 50%),
+                radial-gradient(circle at 40% 80%, rgba(6, 182, 212, 0.1) 0%, transparent 50%);
+            z-index: -1;
+            pointer-events: none;
+        }
+
+        .glass-card {
+            background: linear-gradient(135deg, rgba(30, 41, 59, 0.7), rgba(15, 23, 42, 0.7));
+            backdrop-filter: blur(15px);
+            border: 1px solid rgba(148, 163, 184, 0.2);
+            border-radius: 20px;
+            box-shadow: 
+                0 10px 30px rgba(0, 0, 0, 0.3),
+                inset 0 1px 0 rgba(255, 255, 255, 0.1);
+        }
+
+        .nav-tab {
+            position: relative;
+            transition: all 0.3s ease;
+            background: rgba(30, 41, 59, 0.5);
+            backdrop-filter: blur(10px);
+        }
+
+        .nav-tab.active {
+            background: linear-gradient(135deg, rgba(59, 130, 246, 0.2), rgba(30, 41, 59, 0.8));
+            border: 1px solid rgba(59, 130, 246, 0.3);
+        }
+
+        .nav-tab.active::after {
+            content: '';
+            position: absolute;
+            bottom: -1px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 60%;
+            height: 3px;
+            background: linear-gradient(90deg, #3b82f6, #60a5fa, #3b82f6);
+            border-radius: 2px;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% {
+                opacity: 1;
+            }
+            50% {
+                opacity: 0.7;
+            }
+        }
+
+        .file-upload-area {
+            border: 2px dashed rgba(148, 163, 184, 0.3);
+            transition: all 0.3s ease;
+            background: rgba(15, 23, 42, 0.4);
+            backdrop-filter: blur(10px);
+            border-radius: 16px;
+        }
+
+        .file-upload-area:hover, .file-upload-area.dragover {
+            border-color: #3b82f6;
+            background: rgba(59, 130, 246, 0.1);
+            box-shadow: 0 0 30px rgba(59, 130, 246, 0.2);
+        }
+
+        .card {
+            background: linear-gradient(135deg, rgba(30, 41, 59, 0.8), rgba(15, 23, 42, 0.6));
+            border-radius: 20px;
+            border: 1px solid rgba(148, 163, 184, 0.15);
+            position: relative;
+            overflow: hidden;
+            transition: all 0.4s ease;
+            backdrop-filter: blur(10px);
+        }
+
+        .card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, rgba(59, 130, 246, 0.5), transparent);
+        }
+
+        .card:hover {
+            border-color: rgba(59, 130, 246, 0.4);
+            box-shadow: 
+                0 20px 40px rgba(0, 0, 0, 0.4),
+                0 0 0 1px rgba(59, 130, 246, 0.1);
+            transform: translateY(-5px);
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+            color: white;
+            font-weight: 600;
+            padding: 14px 32px;
+            border-radius: 12px;
+            transition: all 0.3s ease;
+            border: none;
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .btn-primary::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+            transition: 0.5s;
+        }
+
+        .btn-primary:hover::before {
+            left: 100%;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 15px 30px rgba(59, 130, 246, 0.4);
+            background: linear-gradient(135deg, #2563eb 0%, #1e40af 100%);
+        }
+
+        .btn-secondary {
+            background: rgba(30, 41, 59, 0.7);
+            color: #e2e8f0;
+            font-weight: 500;
+            padding: 12px 24px;
+            border-radius: 10px;
+            transition: all 0.3s ease;
+            border: 1px solid rgba(148, 163, 184, 0.3);
+            cursor: pointer;
+            backdrop-filter: blur(10px);
+        }
+
+        .btn-secondary:hover {
+            background: rgba(30, 41, 59, 0.9);
+            border-color: rgba(59, 130, 246, 0.5);
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.3);
+        }
+
+        .btn-primary:disabled, .btn-secondary:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none !important;
+        }
+
+        .progress-ring {
+            transform: rotate(-90deg);
+            transition: stroke-dashoffset 1s ease-in-out;
+        }
+
+        .skill-bar {
+            height: 8px;
+            border-radius: 4px;
+            overflow: hidden;
+            background-color: rgba(30, 41, 59, 0.7);
+            backdrop-filter: blur(10px);
+        }
+
+        .skill-fill {
+            height: 100%;
+            border-radius: 4px;
+            transition: width 1s ease;
+            background: linear-gradient(90deg, #3b82f6, #60a5fa);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .skill-fill::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+            animation: shimmer 2s infinite;
+        }
+
+        @keyframes shimmer {
+            0% {
+                transform: translateX(-100%);
+            }
+            100% {
+                transform: translateX(100%);
+            }
+        }
+
+        .toast {
+            position: fixed;
+            top: 24px;
+            right: 24px;
+            z-index: 1000;
+            animation: slideIn 0.3s ease;
+            background: linear-gradient(135deg, rgba(30, 41, 59, 0.95), rgba(15, 23, 42, 0.95));
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(59, 130, 246, 0.3);
+            box-shadow: 
+                0 10px 25px rgba(0, 0, 0, 0.3),
+                inset 0 1px 0 rgba(255, 255, 255, 0.1);
+        }
+
+        @keyframes slideIn {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .fade-in {
+            animation: fadeIn 0.5s ease;
+        }
+
+        .loading-spinner {
+            border: 3px solid rgba(148, 163, 184, 0.3);
+            border-top: 3px solid #3b82f6;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .success-card {
+            background: linear-gradient(135deg, rgba(16, 185, 129, 0.1), rgba(30, 41, 59, 0.8));
+            border: 1px solid rgba(16, 185, 129, 0.3);
+        }
+
+        .pill {
+            display: inline-block;
+            background: rgba(59, 130, 246, 0.2);
+            color: #93c5fd;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.875rem;
+            font-weight: 500;
+            margin-right: 8px;
+            margin-bottom: 8px;
+            border: 1px solid rgba(59, 130, 246, 0.3);
+        }
+
+        .strength-item, .gap-item {
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 8px;
+            border-left: 3px solid;
+        }
+
+        .strength-item {
+            background: linear-gradient(135deg, rgba(16, 185, 129, 0.1), transparent);
+            border-left-color: #10b981;
+        }
+
+        .gap-item {
+            background: linear-gradient(135deg, rgba(245, 158, 11, 0.1), transparent);
+            border-left-color: #f59e0b;
+        }
+
+        .question-item {
+            background: linear-gradient(135deg, rgba(59, 130, 246, 0.1), transparent);
+            border-left: 3px solid #3b82f6;
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 8px;
+        }
+
+        .modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(2, 6, 23, 0.9);
+            backdrop-filter: blur(10px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s ease;
+        }
+
+        .modal.active {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .modal-content {
+            background: linear-gradient(135deg, rgba(30, 41, 59, 0.95), rgba(15, 23, 42, 0.95));
+            backdrop-filter: blur(20px);
+            border-radius: 24px;
+            border: 1px solid rgba(148, 163, 184, 0.2);
+            width: 90%;
+            max-width: 800px;
+            max-height: 90vh;
+            overflow-y: auto;
+            transform: translateY(20px);
+            transition: transform 0.3s ease;
+            box-shadow: 
+                0 25px 50px -12px rgba(0, 0, 0, 0.5),
+                inset 0 1px 0 rgba(255, 255, 255, 0.1);
+        }
+
+        .modal.active .modal-content {
+            transform: translateY(0);
+        }
+
+        .scrollable-content {
+            max-height: 400px;
+            overflow-y: auto;
+            padding-right: 8px;
+        }
+
+        .scrollable-content::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .scrollable-content::-webkit-scrollbar-track {
+            background: rgba(30, 41, 59, 0.5);
+            border-radius: 4px;
+        }
+
+        .scrollable-content::-webkit-scrollbar-thumb {
+            background: linear-gradient(180deg, #3b82f6, #1d4ed8);
+            border-radius: 4px;
+        }
+
+        .scrollable-content::-webkit-scrollbar-thumb:hover {
+            background: linear-gradient(180deg, #60a5fa, #3b82f6);
+        }
+
+        .candidate-card {
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .candidate-card:hover {
+            transform: translateY(-6px);
+            border-color: rgba(59, 130, 246, 0.7);
+            box-shadow: 0 15px 35px -5px rgba(0, 0, 0, 0.5);
+        }
+
+        .score-badge {
+            font-size: 0.75rem;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-weight: 600;
+            background: linear-gradient(135deg, currentColor 0%, currentColor 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            position: relative;
+            border: 1px solid;
+        }
+
+        .score-badge::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            border-radius: 20px;
+            padding: 1px;
+            background: linear-gradient(135deg, currentColor 0%, transparent 100%);
+            -webkit-mask: 
+                linear-gradient(#fff 0 0) content-box, 
+                linear-gradient(#fff 0 0);
+            -webkit-mask-composite: xor;
+            mask-composite: exclude;
+        }
+
+        .score-90 { color: #34d399; border-color: rgba(52, 211, 153, 0.3); }
+        .score-80 { color: #4ade80; border-color: rgba(74, 222, 128, 0.3); }
+        .score-70 { color: #fbbf24; border-color: rgba(251, 191, 36, 0.3); }
+        .score-60 { color: #fb923c; border-color: rgba(251, 146, 60, 0.3); }
+        .score-50 { color: #f87171; border-color: rgba(248, 113, 113, 0.3); }
+        
+        /* Additional styles for parsed data display */
+        .info-item {
+            background: linear-gradient(135deg, rgba(30, 41, 59, 0.5), transparent);
+            padding: 12px;
+            border-radius: 8px;
+            border-left: 3px solid #10b981;
+            margin-bottom: 8px;
+        }
+        
+        .info-label {
+            font-size: 0.75rem;
+            color: #34d399;
+            font-weight: 500;
+            margin-bottom: 4px;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+        
+        .info-value {
+            font-size: 0.875rem;
+            color: #f8fafc;
+            font-weight: 400;
+            word-break: break-word;
+        }
+        
+        .skills-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            margin-top: 4px;
+        }
+        
+        .skill-pill {
+            background: linear-gradient(135deg, rgba(59, 130, 246, 0.2), transparent);
+            color: #93c5fd;
+            padding: 4px 10px;
+            border-radius: 16px;
+            font-size: 0.75rem;
+            border: 1px solid rgba(59, 130, 246, 0.3);
+        }
+        
+        .summary-text {
+            background: linear-gradient(135deg, rgba(30, 41, 59, 0.5), transparent);
+            padding: 12px;
+            border-radius: 8px;
+            border-left: 3px solid #8b5cf6;
+            font-size: 0.875rem;
+            line-height: 1.5;
+            color: #cbd5e1;
+        }
+
+        .gradient-text {
+            background: linear-gradient(135deg, #60a5fa, #3b82f6, #1d4ed8);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        @keyframes float {
+            0%, 100% {
+                transform: translateY(0);
+            }
+            50% {
+                transform: translateY(-10px);
+            }
+        }
+
+        .floating {
+            animation: float 6s ease-in-out infinite;
+        }
+
+        .floating-delay-1 {
+            animation-delay: 2s;
+        }
+
+        .floating-delay-2 {
+            animation-delay: 4s;
+        }
+
+        .floating-delay-3 {
+            animation-delay: 1s;
+        }
+
+        /* Metrics specific styles */
+        .metric-card {
+            transition: all 0.3s ease;
+            height: 100%;
+        }
+
+        .metric-card:hover {
+            transform: translateY(-3px);
+        }
+
+        .metric-value {
+            font-size: 2.5rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, #60a5fa, #3b82f6);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .metric-label {
+            font-size: 0.875rem;
+            color: #94a3b8;
+            margin-top: 0.5rem;
+        }
+
+        .metric-change {
+            font-size: 0.75rem;
+            font-weight: 600;
+            padding: 2px 8px;
+            border-radius: 12px;
+            margin-left: 8px;
+        }
+
+        .metric-change.positive {
+            background: rgba(34, 197, 94, 0.2);
+            color: #4ade80;
+        }
+
+        .metric-change.negative {
+            background: rgba(239, 68, 68, 0.2);
+            color: #f87171;
+        }
+
+        .chart-container {
+            position: relative;
+            height: 300px;
+            width: 100%;
+        }
+
+        .trend-line {
+            position: relative;
+            padding-left: 24px;
+        }
+
+        .trend-line::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #3b82f6, #60a5fa);
+        }
+
+        .trend-up::before {
+            background: linear-gradient(135deg, #10b981, #34d399);
+        }
+
+        .trend-down::before {
+            background: linear-gradient(135deg, #ef4444, #f87171);
+        }
+        
+        /* Interview evaluation specific styles */
+        .interview-question-card {
+            background: linear-gradient(135deg, rgba(59, 130, 246, 0.1), rgba(30, 41, 59, 0.6));
+            border: 1px solid rgba(59, 130, 246, 0.3);
+            border-radius: 16px;
+            padding: 24px;
+            margin-bottom: 24px;
+        }
+        
+        .evaluation-result-card {
+            background: linear-gradient(135deg, rgba(16, 185, 129, 0.1), rgba(30, 41, 59, 0.6));
+            border: 1px solid rgba(16, 185, 129, 0.3);
+            border-radius: 16px;
+            padding: 24px;
+            margin-top: 24px;
+        }
+        
+        .difficulty-badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+        
+        .difficulty-easier {
+            background: rgba(34, 197, 94, 0.2);
+            color: #4ade80;
+            border: 1px solid rgba(34, 197, 94, 0.3);
+        }
+        
+        .difficulty-same {
+            background: rgba(245, 158, 11, 0.2);
+            color: #fbbf24;
+            border: 1px solid rgba(245, 158, 11, 0.3);
+        }
+        
+        .difficulty-harder {
+            background: rgba(239, 68, 68, 0.2);
+            color: #f87171;
+            border: 1px solid rgba(239, 68, 68, 0.3);
+        }
+    </style>
+</head>
+<body class="text-dark-200">
+    <div class="min-h-screen">
+        <header class="glass-card shadow-lg sticky top-0 z-50" style="
+            background: linear-gradient(135deg, 
+                rgba(15, 23, 42, 0.95) 0%, 
+                rgba(30, 41, 59, 0.95) 50%, 
+                rgba(15, 23, 42, 0.95) 100%
+            );
+            backdrop-filter: blur(20px);
+            border-bottom: 1px solid rgba(148, 163, 184, 0.1);
+        ">
+            <div class="container mx-auto px-4 py-4">
+                <div class="flex flex-col md:flex-row md:items-center justify-between">
+                    <div class="mb-4 md:mb-0">
+                        <h1 class="text-2xl font-bold font-poppins">
+                            <i class="fas fa-brain mr-2" style="
+                                background: linear-gradient(135deg, #3b82f6, #60a5fa);
+                                -webkit-background-clip: text;
+                                -webkit-text-fill-color: transparent;
+                            "></i>
+                            <span class="gradient-text">ATS Resume Intelligence</span>
+                        </h1>
+                        <p class="text-sm text-dark-400 mt-1">
+                            LLM-powered parsing • Supabase storage • RAG-based matching • Agentic Evaluation
+                        </p>
+                    </div>
+                    
+                    <div class="flex space-x-1 bg-dark-800/50 p-1 rounded-xl backdrop-blur-sm">
+                        <button 
+                            id="tab-upload" 
+                            class="nav-tab active px-5 py-3 rounded-lg font-medium text-white transition-all duration-200"
+                            onclick="switchTab('upload')"
+                        >
+                            <i class="fas fa-file-upload mr-2"></i>
+                            Upload Resume
+                        </button>
+                        <button 
+                            id="tab-match" 
+                            class="nav-tab px-5 py-3 rounded-lg font-medium text-dark-400 hover:text-dark-200 transition-all duration-200"
+                            onclick="switchTab('match')"
+                        >
+                            <i class="fas fa-bullseye mr-2"></i>
+                            Job Match
+                        </button>
+                        <button 
+                            id="tab-evaluate" 
+                            class="nav-tab px-5 py-3 rounded-lg font-medium text-dark-400 hover:text-dark-200 transition-all duration-200"
+                            onclick="switchTab('evaluate')"
+                        >
+                            <i class="fas fa-search mr-2"></i>
+                            Self Evaluation
+                        </button>
+                        <button 
+                            id="tab-metrics" 
+                            class="nav-tab px-5 py-3 rounded-lg font-medium text-dark-400 hover:text-dark-200 transition-all duration-200"
+                            onclick="switchTab('metrics')"
+                        >
+                            <i class="fas fa-chart-line mr-2"></i>
+                            Metrics
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <main class="container mx-auto px-4 py-8">
+            <!-- Floating decorative elements -->
+            <div class="fixed top-20 left-10 w-64 h-64 bg-blue-500/10 rounded-full blur-3xl -z-10"></div>
+            <div class="fixed bottom-20 right-10 w-96 h-96 bg-purple-500/10 rounded-full blur-3xl -z-10"></div>
+            
+            <!-- Upload Tab -->
+            <div id="content-upload" class="fade-in">
+                <!-- ... (existing upload tab content remains exactly the same) ... -->
+                <div class="max-w-4xl mx-auto">
+                    <div class="card p-8">
+                        <div class="text-center mb-8">
+                            <div class="inline-flex items-center justify-center w-16 h-16 bg-primary-900/30 rounded-full mb-4 border border-primary-800/50 floating">
+                                <i class="fas fa-file-pdf text-2xl text-primary-400"></i>
+                            </div>
+                            <h2 class="text-2xl font-bold text-white mb-2">Upload Resume</h2>
+                            <p class="text-dark-400">
+                                Upload a PDF resume. It will be parsed using Gemini and stored in Supabase.
+                            </p>
+                        </div>
+
+                        <div 
+                            id="upload-area" 
+                            class="file-upload-area rounded-2xl p-10 text-center cursor-pointer mb-6"
+                            onclick="document.getElementById('resume-file').click()"
+                        >
+                            <div class="mb-6" id="upload-default-state">
+                                <i class="fas fa-cloud-upload-alt text-5xl text-primary-400 mb-4"></i>
+                                <h3 class="text-lg font-medium text-dark-200 mb-2">Drag & drop your resume PDF</h3>
+                                <p class="text-dark-400 mb-4">or click to browse files</p>
+                            </div>
+                            <input 
+                                type="file" 
+                                id="resume-file" 
+                                class="hidden" 
+                                accept=".pdf"
+                                onchange="handleFileSelect(event, 'upload')"
+                            >
+                            <div id="file-info" class="hidden">
+                                <div class="inline-flex items-center bg-primary-900/20 rounded-lg px-4 py-3 border border-primary-800/50">
+                                    <i class="fas fa-file-pdf text-primary-400 mr-3"></i>
+                                    <span id="file-name" class="font-medium text-primary-300"></span>
+                                    <button onclick="removeFile('upload')" class="ml-4 text-dark-400 hover:text-dark-200">
+                                        <i class="fas fa-times"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div id="parse-result" class="hidden success-card p-6 mb-6">
+                            <div class="flex items-start">
+                                <div class="flex-shrink-0">
+                                    <div class="w-10 h-10 bg-green-900/30 rounded-full flex items-center justify-center border border-green-800/50">
+                                        <i class="fas fa-check text-green-400"></i>
+                                    </div>
+                                </div>
+                                <div class="ml-4 flex-1">
+                                    <div class="flex justify-between items-start">
+                                        <h3 class="font-bold text-green-300 mb-1">Resume uploaded and parsed successfully!</h3>
+                                        <button onclick="showAllParsedData()" class="text-sm text-primary-400 hover:text-primary-300">
+                                            <i class="fas fa-expand mr-1"></i> View All Data
+                                        </button>
+                                    </div>
+                                    <div id="parsed-details" class="text-green-400 mt-2">
+                                        <!-- Parsed data will be inserted here -->
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="text-center">
+                            <button 
+                                id="parse-btn" 
+                                class="btn-primary w-full max-w-xs"
+                                onclick="uploadAndParseResume()"
+                                disabled
+                            >
+                                <span id="parse-btn-text">Upload & Parse</span>
+                                <div id="parse-spinner" class="hidden loading-spinner w-5 h-5 ml-2 inline-block"></div>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Match Tab -->
+            <div id="content-match" class="hidden fade-in">
+                <!-- ... (existing match tab content remains exactly the same) ... -->
+                <div class="max-w-5xl mx-auto">
+                    <div class="card p-8">
+                        <div class="text-center mb-8">
+                            <div class="inline-flex items-center justify-center w-16 h-16 bg-purple-900/30 rounded-full mb-4 border border-purple-800/50 floating-delay-1">
+                                <i class="fas fa-bullseye text-2xl text-purple-400"></i>
+                            </div>
+                            <h2 class="text-2xl font-bold text-white mb-2">Job Description Match</h2>
+                            <p class="text-dark-400">
+                                Paste a job description. Backend uses pgvector (Supabase) + Gemini embeddings to retrieve and rank candidates.
+                            </p>
+                        </div>
+
+                        <div class="mb-8">
+                            <label class="block text-sm font-medium text-dark-300 mb-3">
+                                <i class="fas fa-file-alt mr-2"></i>
+                                Job Description
+                            </label>
+                            <textarea 
+                                id="jd-text" 
+                                class="w-full h-48 p-4 bg-dark-800/50 border border-dark-700 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-primary-500 resize-none text-dark-200 backdrop-blur-sm"
+                                placeholder="Paste the job description here..."
+                                oninput="updateCharCount('jd-text', 'jd-char-count')"
+                            ></textarea>
+                            <div class="flex justify-between mt-2">
+                                <span class="text-sm text-dark-400">Enter the job description you want to match candidates against</span>
+                                <span id="jd-char-count" class="text-sm text-dark-400">0 characters</span>
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+                            <div>
+                                <label class="block text-sm font-medium text-dark-300 mb-3">
+                                    <i class="fas fa-filter mr-2"></i>
+                                    Filter by Domain (optional)
+                                </label>
+                                <select 
+                                    id="domain-filter" 
+                                    class="w-full p-3 bg-dark-800/50 border border-dark-700 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-primary-500 text-dark-200 backdrop-blur-sm"
+                                >
+                                    <option value="">All Domains</option>
+                                    <option value="ML/AI">ML/AI</option>
+                                    <option value="Backend">Backend</option>
+                                    <option value="Frontend">Frontend</option>
+                                    <option value="Data">Data Science</option>
+                                    <option value="Full Stack">Full Stack</option>
+                                    <option value="DevOps">DevOps</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-dark-300 mb-3">
+                                    <i class="fas fa-users mr-2"></i>
+                                    Top K Candidates
+                                </label>
+                                <select 
+                                    id="top-k" 
+                                    class="w-full p-3 bg-dark-800/50 border border-dark-700 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-primary-500 text-dark-200 backdrop-blur-sm"
+                                >
+                                    <option value="3">3</option>
+                                    <option value="5" selected>5</option>
+                                    <option value="10">10</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="text-center mb-10">
+                            <button 
+                                id="match-btn" 
+                                class="btn-primary w-full max-w-xs"
+                                onclick="matchCandidates()"
+                            >
+                                <span id="match-btn-text">Find & Score Candidates</span>
+                                <div id="match-spinner" class="hidden loading-spinner w-5 h-5 ml-2 inline-block"></div>
+                            </button>
+                        </div>
+
+                        <div id="match-results" class="hidden">
+                            <div class="flex items-center justify-between mb-6">
+                                <h3 class="text-xl font-bold text-white">Top Candidates</h3>
+                                <span id="results-count" class="text-dark-400"></span>
+                            </div>
+                            <div id="candidates-list" class="space-y-6">
+                                <!-- Candidate cards will be inserted here -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Evaluate Tab -->
+            <div id="content-evaluate" class="hidden fade-in">
+                <div class="max-w-6xl mx-auto">
+                    <div class="card p-8">
+                        <div class="text-center mb-8">
+                            <div class="inline-flex items-center justify-center w-16 h-16 bg-green-900/30 rounded-full mb-4 border border-green-800/50 floating-delay-2">
+                                <i class="fas fa-search text-2xl text-green-400"></i>
+                            </div>
+                            <h2 class="text-2xl font-bold text-white mb-2">Agentic Self Evaluation</h2>
+                            <p class="text-dark-400">
+                                <span class="font-medium text-green-400">Intelligent AI-powered evaluation.</span> 
+                                Upload your resume and a job description. The AI agent will analyze, decide what you need, and provide personalized feedback.
+                                <span class="font-medium text-green-400">Your data is not stored.</span>
+                            </p>
+                        </div>
+
+                        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+                            <div>
+                                <div class="mb-6">
+                                    <label class="block text-sm font-medium text-dark-300 mb-3">
+                                        <i class="fas fa-user mr-2"></i>
+                                        Your Resume (PDF)
+                                    </label>
+                                    <div 
+                                        id="self-upload-area" 
+                                        class="file-upload-area rounded-2xl p-8 text-center cursor-pointer"
+                                        onclick="document.getElementById('self-resume-file').click()"
+                                    >
+                                        <div id="self-upload-default-state">
+                                            <i class="fas fa-file-upload text-4xl text-primary-400 mb-4"></i>
+                                            <h3 class="text-lg font-medium text-dark-200 mb-2">Choose Resume PDF</h3>
+                                            <p class="text-dark-400">Click to select your resume</p>
+                                        </div>
+                                        <input 
+                                            type="file" 
+                                            id="self-resume-file" 
+                                            class="hidden" 
+                                            accept=".pdf"
+                                            onchange="handleFileSelect(event, 'evaluate')"
+                                        >
+                                    </div>
+                                    <div id="self-file-info" class="hidden mt-4">
+                                        <div class="inline-flex items-center bg-primary-900/20 rounded-lg px-4 py-3 border border-primary-800/50">
+                                            <i class="fas fa-file-pdf text-primary-400 mr-3"></i>
+                                            <span id="self-file-name" class="font-medium text-primary-300"></span>
+                                            <button onclick="removeFile('evaluate')" class="ml-4 text-dark-400 hover:text-dark-200">
+                                                <i class="fas fa-times"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div>
+                                <label class="block text-sm font-medium text-dark-300 mb-3">
+                                    <i class="fas fa-briefcase mr-2"></i>
+                                    Job Description
+                                </label>
+                                <textarea 
+                                    id="self-jd-text" 
+                                    class="w-full h-64 p-4 bg-dark-800/50 border border-dark-700 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-primary-500 resize-none text-dark-200 backdrop-blur-sm"
+                                    placeholder="Paste the job description you are applying for..."
+                                    oninput="updateCharCount('self-jd-text', 'self-jd-char-count')"
+                                ></textarea>
+                                <div class="flex justify-between mt-2">
+                                    <span class="text-sm text-dark-400">Enter the job description for evaluation</span>
+                                    <span id="self-jd-char-count" class="text-sm text-dark-400">0 characters</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="text-center mb-10">
+                            <button 
+                                id="evaluate-btn" 
+                                class="btn-primary w-full max-w-xs"
+                                onclick="agenticSelfEvaluate()"
+                                disabled
+                            >
+                                <span id="evaluate-btn-text">Evaluate My Fit (AI Agent)</span>
+                                <div id="evaluate-spinner" class="hidden loading-spinner w-5 h-5 ml-2 inline-block"></div>
+                            </button>
+                        </div>
+
+                        <!-- Interview Evaluation Section -->
+                        <div id="interview-section" class="hidden mt-10">
+                            <div class="border-t border-dark-700 pt-8">
+                                <h3 class="text-xl font-bold text-white mb-6">Interactive Interview Practice</h3>
+                                
+                                <!-- Current Question -->
+                                <div id="current-question-container" class="interview-question-card">
+                                    <h4 class="text-lg font-bold text-primary-300 mb-3">Current Question:</h4>
+                                    <p id="current-question-text" class="text-white text-lg mb-4">Click "Start Interview" to begin</p>
+                                    
+                                    <!-- Answer Input -->
+                                    <div class="mt-4">
+                                        <label class="block text-sm font-medium text-dark-300 mb-3">
+                                            <i class="fas fa-comment-dots mr-2"></i>
+                                            Your Answer
+                                        </label>
+                                        <textarea 
+                                            id="interview-answer" 
+                                            class="w-full h-32 p-4 bg-dark-800/50 border border-dark-700 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-primary-500 resize-none text-dark-200 backdrop-blur-sm"
+                                            placeholder="Type your answer here..."
+                                        ></textarea>
+                                        <div class="flex justify-between items-center mt-3">
+                                            <span id="answer-char-count" class="text-sm text-dark-400">0 characters</span>
+                                            <button 
+                                                id="submit-answer-btn" 
+                                                class="btn-primary"
+                                                onclick="submitInterviewAnswer()"
+                                                disabled
+                                            >
+                                                <span id="submit-answer-btn-text">Submit Answer</span>
+                                                <div id="submit-answer-spinner" class="hidden loading-spinner w-5 h-5 ml-2 inline-block"></div>
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <!-- Evaluation Result -->
+                                <div id="evaluation-result-container" class="evaluation-result-card hidden">
+                                    <h4 class="text-lg font-bold text-green-300 mb-3">Evaluation Result</h4>
+                                    
+                                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+                                        <div class="text-center">
+                                            <div class="text-4xl font-bold text-white mb-1" id="answer-score">0</div>
+                                            <div class="text-sm text-dark-400">Answer Score</div>
+                                        </div>
+                                        <div class="text-center">
+                                            <div class="text-lg font-semibold text-white mb-1" id="next-difficulty-text">Same</div>
+                                            <div class="text-sm text-dark-400">Next Difficulty</div>
+                                        </div>
+                                        <div class="text-center">
+                                            <div class="text-lg font-semibold text-primary-300 mb-1" id="questions-remaining">-</div>
+                                            <div class="text-sm text-dark-400">Session Progress</div>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="space-y-4">
+                                        <div>
+                                            <h5 class="text-md font-semibold text-white mb-2">Feedback</h5>
+                                            <p id="feedback-text" class="text-dark-200">No feedback yet.</p>
+                                        </div>
+                                        
+                                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                            <div>
+                                                <h5 class="text-md font-semibold text-green-300 mb-2">Strengths</h5>
+                                                <div id="strengths-list" class="space-y-2">
+                                                    <p class="text-dark-400 italic">Not provided</p>
+                                                </div>
+                                            </div>
+                                            <div>
+                                                <h5 class="text-md font-semibold text-yellow-300 mb-2">Weaknesses</h5>
+                                                <div id="weaknesses-list" class="space-y-2">
+                                                    <p class="text-dark-400 italic">Not provided</p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        
+                                        <div class="text-center mt-6">
+                                            <button 
+                                                id="next-question-btn" 
+                                                class="btn-primary"
+                                                onclick="loadNextQuestion()"
+                                            >
+                                                <i class="fas fa-forward mr-2"></i>
+                                                <span id="next-question-btn-text">Continue with Next Question</span>
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <!-- Interview Controls -->
+                                <div class="flex justify-center space-x-4 mt-6">
+                                    <button 
+                                        id="start-interview-btn" 
+                                        class="btn-secondary"
+                                        onclick="startInterviewSession()"
+                                    >
+                                        <i class="fas fa-play mr-2"></i>
+                                        Start Interview
+                                    </button>
+                                    <button 
+                                        id="reset-interview-btn" 
+                                        class="btn-secondary"
+                                        onclick="resetInterviewSession()"
+                                    >
+                                        <i class="fas fa-redo mr-2"></i>
+                                        Reset Interview
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div id="evaluate-results" class="hidden">
+                            <h3 class="text-xl font-bold text-white mb-6">Evaluation Results</h3>
+                            <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                                <div class="lg:col-span-1">
+                                    <div class="card p-6 text-center">
+                                        <h4 class="text-lg font-bold text-dark-300 mb-4">Overall Fit Score</h4>
+                                        <div class="relative w-48 h-48 mx-auto mb-4">
+                                            <svg class="w-full h-full" viewBox="0 0 100 100">
+                                                <circle cx="50" cy="50" r="45" fill="none" stroke="#334155" stroke-width="8"/>
+                                                <circle 
+                                                    id="score-circle" 
+                                                    cx="50" cy="50" r="45" fill="none" 
+                                                    stroke="#10b981" 
+                                                    stroke-width="8" 
+                                                    stroke-linecap="round"
+                                                    stroke-dasharray="283"
+                                                    stroke-dashoffset="283"
+                                                    transform="rotate(-90 50 50)"
+                                                />
+                                                <text id="score-text" x="50" y="55" text-anchor="middle" font-size="24" font-weight="bold" fill="#f8fafc">0%</text>
+                                            </svg>
+                                        </div>
+                                        <div id="score-category" class="text-sm font-medium text-dark-400">No score yet</div>
+                                        <div id="confidence-level" class="text-xs text-primary-400 mt-1"></div>
+                                        <button 
+                                            id="view-details-btn" 
+                                            class="btn-secondary w-full mt-6"
+                                            onclick="showEvaluationDetails()"
+                                            disabled
+                                        >
+                                            <i class="fas fa-expand mr-2"></i> View Detailed Analysis
+                                        </button>
+                                        <button 
+                                            id="generate-questions-btn" 
+                                            class="btn-secondary w-full mt-3"
+                                            onclick="showInterviewQuestions()"
+                                            disabled
+                                        >
+                                            <i class="fas fa-question-circle mr-2"></i> Interview Questions
+                                        </button>
+                                        <button 
+                                            id="view-roadmap-btn" 
+                                            class="btn-secondary w-full mt-3"
+                                            onclick="showLearningRoadmap()"
+                                            disabled
+                                        >
+                                            <i class="fas fa-road mr-2"></i> Learning Roadmap
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <div class="lg:col-span-2">
+                                    <div class="space-y-6">
+                                        <div class="card p-6">
+                                            <div class="flex items-center justify-between mb-4">
+                                                <div class="flex items-center">
+                                                    <div class="w-10 h-10 bg-green-900/30 rounded-full flex items-center justify-center mr-3 border border-green-800/50">
+                                                        <i class="fas fa-thumbs-up text-green-400"></i>
+                                                    </div>
+                                                    <h4 class="text-lg font-bold text-white">Key Strengths</h4>
+                                                </div>
+                                                <span id="strengths-count" class="score-badge score-90">0 strengths</span>
+                                            </div>
+                                            <div id="strengths-preview" class="scrollable-content">
+                                                <p class="text-dark-400 italic">Run evaluation to see your strengths.</p>
+                                            </div>
+                                            <button 
+                                                id="view-strengths-btn"
+                                                onclick="showStrengthsModal()" 
+                                                class="btn-secondary w-full mt-4"
+                                                disabled
+                                            >
+                                                <i class="fas fa-list-ol mr-2"></i> View All Strengths
+                                            </button>
+                                        </div>
+                                        <div class="card p-6">
+                                            <div class="flex items-center justify-between mb-4">
+                                                <div class="flex items-center">
+                                                    <div class="w-10 h-10 bg-yellow-900/30 rounded-full flex items-center justify-center mr-3 border border-yellow-800/50">
+                                                        <i class="fas fa-exclamation-triangle text-yellow-400"></i>
+                                                    </div>
+                                                    <h4 class="text-lg font-bold text-white">Skill Gaps & Suggestions</h4>
+                                                </div>
+                                                <span id="gaps-count" class="score-badge score-70">0 gaps</span>
+                                            </div>
+                                            <div id="gaps-preview" class="scrollable-content">
+                                                <p class="text-dark-400 italic">Run evaluation to see skill gaps.</p>
+                                            </div>
+                                            <button 
+                                                id="view-gaps-btn"
+                                                onclick="showGapsModal()" 
+                                                class="btn-secondary w-full mt-4"
+                                                disabled
+                                            >
+                                                <i class="fas fa-list-ol mr-2"></i> View All Gaps
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Agent Decision Banner -->
+                            <div id="agent-decision-banner" class="hidden mt-6">
+                                <div class="card p-4 border-l-4 border-primary-500 bg-primary-900/20">
+                                    <div class="flex items-center">
+                                        <div class="w-10 h-10 bg-primary-900/30 rounded-full flex items-center justify-center mr-3 border border-primary-800/50">
+                                            <i class="fas fa-robot text-primary-400"></i>
+                                        </div>
+                                        <div class="flex-1">
+                                            <h4 class="text-lg font-bold text-white mb-1">AI Agent Decision</h4>
+                                            <p id="agent-decision-text" class="text-primary-300">Agent is analyzing your profile...</p>
+                                            <div id="agent-actions" class="mt-2 flex flex-wrap gap-2">
+                                                <!-- Dynamic action badges will appear here -->
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Metrics Tab (NEW) -->
+            <div id="content-metrics" class="hidden fade-in">
+                <div class="max-w-7xl mx-auto">
+                    <div class="card p-8">
+                        <div class="text-center mb-8">
+                            <div class="inline-flex items-center justify-center w-16 h-16 bg-indigo-900/30 rounded-full mb-4 border border-indigo-800/50 floating-delay-3">
+                                <i class="fas fa-chart-line text-2xl text-indigo-400"></i>
+                            </div>
+                            <h2 class="text-2xl font-bold text-white mb-2">System Metrics & Analytics</h2>
+                            <p class="text-dark-400">
+                                Comprehensive insights into your ATS performance, candidate database, and matching effectiveness.
+                            </p>
+                        </div>
+
+                        <!-- Key Metrics Cards -->
+                        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+                            <div class="card p-6 metric-card">
+                                <div class="flex items-center justify-between">
+                                    <div class="p-3 bg-blue-900/30 rounded-lg">
+                                        <i class="fas fa-users text-blue-400 text-xl"></i>
+                                    </div>
+                                    <span class="metric-change positive">+12%</span>
+                                </div>
+                                <div class="mt-4">
+                                    <div class="metric-value" id="total-candidates">1,247</div>
+                                    <div class="metric-label">Total Candidates</div>
+                                </div>
+                            </div>
+
+                            <div class="card p-6 metric-card">
+                                <div class="flex items-center justify-between">
+                                    <div class="p-3 bg-green-900/30 rounded-lg">
+                                        <i class="fas fa-bullseye text-green-400 text-xl"></i>
+                                    </div>
+                                    <span class="metric-change positive">+8%</span>
+                                </div>
+                                <div class="mt-4">
+                                    <div class="metric-value" id="avg-match-score">78.5%</div>
+                                    <div class="metric-label">Avg Match Score</div>
+                                </div>
+                            </div>
+
+                            <div class="card p-6 metric-card">
+                                <div class="flex items-center justify-between">
+                                    <div class="p-3 bg-purple-900/30 rounded-lg">
+                                        <i class="fas fa-file-upload text-purple-400 text-xl"></i>
+                                    </div>
+                                    <span class="metric-change positive">+15%</span>
+                                </div>
+                                <div class="mt-4">
+                                    <div class="metric-value" id="parsed-resumes">892</div>
+                                    <div class="metric-label">Parsed Resumes</div>
+                                </div>
+                            </div>
+
+                            <div class="card p-6 metric-card">
+                                <div class="flex items-center justify-between">
+                                    <div class="p-3 bg-yellow-900/30 rounded-lg">
+                                        <i class="fas fa-search text-yellow-400 text-xl"></i>
+                                    </div>
+                                    <span class="metric-change negative">-3%</span>
+                                </div>
+                                <div class="mt-4">
+                                    <div class="metric-value" id="avg-processing">2.4s</div>
+                                    <div class="metric-label">Avg Processing Time</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Charts Section -->
+                        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+                            <div class="card p-6">
+                                <div class="flex items-center justify-between mb-6">
+                                    <h3 class="text-lg font-bold text-white">Match Score Distribution</h3>
+                                    <div class="flex items-center space-x-2">
+                                        <span class="text-sm text-dark-400">Last 30 days</span>
+                                        <i class="fas fa-filter text-dark-400"></i>
+                                    </div>
+                                </div>
+                                <div class="chart-container">
+                                    <canvas id="scoreDistributionChart"></canvas>
+                                </div>
+                            </div>
+
+                            <div class="card p-6">
+                                <div class="flex items-center justify-between mb-6">
+                                    <h3 class="text-lg font-bold text-white">Top Skills in Database</h3>
+                                    <div class="flex items-center space-x-2">
+                                        <span class="text-sm text-dark-400">Top 10</span>
+                                        <i class="fas fa-chart-bar text-dark-400"></i>
+                                    </div>
+                                </div>
+                                <div class="chart-container">
+                                    <canvas id="skillsChart"></canvas>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Domain Distribution and Trends -->
+                        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+                            <div class="card p-6">
+                                <div class="flex items-center justify-between mb-6">
+                                    <h3 class="text-lg font-bold text-white">Candidate Domains</h3>
+                                    <div class="flex items-center space-x-2">
+                                        <span class="text-sm text-dark-400">Distribution</span>
+                                        <i class="fas fa-pie-chart text-dark-400"></i>
+                                    </div>
+                                </div>
+                                <div class="chart-container">
+                                    <canvas id="domainChart"></canvas>
+                                </div>
+                            </div>
+
+                            <div class="card p-6">
+                                <div class="flex items-center justify-between mb-6">
+                                    <h3 class="text-lg font-bold text-white">Monthly Activity</h3>
+                                    <div class="flex items-center space-x-2">
+                                        <span class="text-sm text-dark-400">Uploads vs Matches</span>
+                                        <i class="fas fa-chart-line text-dark-400"></i>
+                                    </div>
+                                </div>
+                                <div class="chart-container">
+                                    <canvas id="activityChart"></canvas>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Performance Metrics -->
+                        <div class="card p-6">
+                            <h3 class="text-lg font-bold text-white mb-6">Performance Metrics</h3>
+                            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                                <div class="space-y-4">
+                                    <div>
+                                        <div class="flex justify-between mb-2">
+                                            <span class="text-sm text-dark-400">Parsing Accuracy</span>
+                                            <span class="text-sm font-semibold text-green-400">94.2%</span>
+                                        </div>
+                                        <div class="skill-bar">
+                                            <div class="skill-fill" style="width: 94.2%"></div>
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <div class="flex justify-between mb-2">
+                                            <span class="text-sm text-dark-400">Embedding Quality</span>
+                                            <span class="text-sm font-semibold text-green-400">91.5%</span>
+                                        </div>
+                                        <div class="skill-bar">
+                                            <div class="skill-fill" style="width: 91.5%"></div>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="space-y-4">
+                                    <div>
+                                        <div class="flex justify-between mb-2">
+                                            <span class="text-sm text-dark-400">Match Relevance</span>
+                                            <span class="text-sm font-semibold text-blue-400">86.7%</span>
+                                        </div>
+                                        <div class="skill-bar">
+                                            <div class="skill-fill" style="width: 86.7%"></div>
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <div class="flex justify-between mb-2">
+                                            <span class="text-sm text-dark-400">Response Time</span>
+                                            <span class="text-sm font-semibold text-yellow-400">2.4s</span>
+                                        </div>
+                                        <div class="skill-bar">
+                                            <div class="skill-fill" style="width: 88%"></div>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="space-y-6">
+                                    <div class="trend-line trend-up">
+                                        <div class="text-sm text-dark-400">Upload Growth</div>
+                                        <div class="text-white font-semibold">+24% this month</div>
+                                    </div>
+                                    <div class="trend-line trend-up">
+                                        <div class="text-sm text-dark-400">Match Accuracy</div>
+                                        <div class="text-white font-semibold">+12% this quarter</div>
+                                    </div>
+                                    <div class="trend-line trend-down">
+                                        <div class="text-sm text-dark-400">Processing Time</div>
+                                        <div class="text-white font-semibold">-18% improved</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Database Stats -->
+                        <div class="card p-6">
+                            <h3 class="text-lg font-bold text-white mb-6">Database Statistics</h3>
+                            <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                                <div class="text-center p-4 bg-dark-800/50 rounded-lg">
+                                    <div class="text-2xl font-bold text-primary-400">1.2M</div>
+                                    <div class="text-sm text-dark-400 mt-1">Embeddings Stored</div>
+                                </div>
+                                <div class="text-center p-4 bg-dark-800/50 rounded-lg">
+                                    <div class="text-2xl font-bold text-green-400">98.3%</div>
+                                    <div class="text-sm text-dark-400 mt-1">Uptime</div>
+                                </div>
+                                <div class="text-center p-4 bg-dark-800/50 rounded-lg">
+                                    <div class="text-2xl font-bold text-purple-400">4.7TB</div>
+                                    <div class="text-sm text-dark-400 mt-1">Storage Used</div>
+                                </div>
+                                <div class="text-center p-4 bg-dark-800/50 rounded-lg">
+                                    <div class="text-2xl font-bold text-yellow-400">12.4K</div>
+                                    <div class="text-sm text-dark-400 mt-1">API Calls Today</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Refresh Metrics Button -->
+                        <div class="text-center mt-8">
+                            <button 
+                                id="refresh-metrics-btn" 
+                                class="btn-primary w-full max-w-xs"
+                                onclick="refreshMetrics()"
+                            >
+                                <span id="refresh-metrics-btn-text">Refresh Metrics</span>
+                                <div id="refresh-metrics-spinner" class="hidden loading-spinner w-5 h-5 ml-2 inline-block"></div>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Modals -->
+    <div id="details-modal" class="modal">
+        <div class="modal-content p-8">
+            <div class="flex justify-between items-center border-b border-dark-700 pb-4 mb-6">
+                <h3 class="text-2xl font-bold text-white"><i class="fas fa-chart-bar mr-2 text-primary-400"></i> Detailed Evaluation Report</h3>
+                <button onclick="closeModal('details-modal')" class="text-dark-400 hover:text-white text-xl">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div id="modal-details-content" class="text-dark-300 space-y-4">
+                <p class="text-dark-400">Loading comprehensive breakdown...</p>
+            </div>
+        </div>
+    </div>
+
+    <div id="questions-modal" class="modal">
+        <div class="modal-content p-8">
+            <div class="flex justify-between items-center border-b border-dark-700 pb-4 mb-6">
+                <h3 class="text-2xl font-bold text-white"><i class="fas fa-question-circle mr-2 text-primary-400"></i> Interview Questions</h3>
+                <button onclick="closeModal('questions-modal')" class="text-dark-400 hover:text-white text-xl">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div id="modal-questions-content" class="scrollable-content space-y-4">
+                <p class="text-dark-400">Interview questions will appear here.</p>
+            </div>
+        </div>
+    </div>
+
+    <div id="candidate-detail-modal" class="modal">
+        <div class="modal-content p-8">
+            <div class="flex justify-between items-center border-b border-dark-700 pb-4 mb-6">
+                <h3 class="text-2xl font-bold text-white"><i class="fas fa-user-check mr-2 text-primary-400"></i> Candidate Full Report</h3>
+                <button onclick="closeModal('candidate-detail-modal')" class="text-dark-400 hover:text-white text-xl">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div id="modal-candidate-content" class="scrollable-content space-y-4">
+                <!-- Candidate details will be inserted here -->
+            </div>
+        </div>
+    </div>
+
+    <div id="parsed-data-modal" class="modal">
+        <div class="modal-content p-8">
+            <div class="flex justify-between items-center border-b border-dark-700 pb-4 mb-6">
+                <h3 class="text-2xl font-bold text-white"><i class="fas fa-file-alt mr-2 text-primary-400"></i> All Parsed Resume Data</h3>
+                <button onclick="closeModal('parsed-data-modal')" class="text-dark-400 hover:text-white text-xl">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div id="modal-parsed-content" class="scrollable-content space-y-4">
+                <p class="text-dark-400">Loading parsed data...</p>
+            </div>
+        </div>
+    </div>
+
+    <div id="roadmap-modal" class="modal">
+        <div class="modal-content p-8">
+            <div class="flex justify-between items-center border-b border-dark-700 pb-4 mb-6">
+                <h3 class="text-2xl font-bold text-white"><i class="fas fa-road mr-2 text-primary-400"></i> Personalized Learning Roadmap</h3>
+                <button onclick="closeModal('roadmap-modal')" class="text-dark-400 hover:text-white text-xl">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div id="modal-roadmap-content" class="scrollable-content space-y-4">
+                <p class="text-dark-400">Learning roadmap will appear here.</p>
+            </div>
+        </div>
+    </div>
+
+    <div id="toast-container" class="toast-container"></div>
+
+    <script>
+        // --- Configuration ---
+        const API_BASE_URL = 'http://127.0.0.1:8000';
+
+        // Global store for evaluation data
+        let currentEvaluationData = null;
+        let matchedCandidatesData = [];
+        let currentParsedResumeData = null; // Store parsed resume data
+        
+        // Interview session state
+        let interviewSessionId = null;
+        let interviewQuestions = [];
+        let currentQuestionIndex = 0;
+        let interviewRole = '';
+        let interviewDomain = '';
+        
+        // Chart instances
+        let scoreDistributionChart = null;
+        let skillsChart = null;
+        let domainChart = null;
+        let activityChart = null;
+        
+        // --- Utility Functions ---
+
+        function showToast(message, type = 'success') {
+            const container = document.getElementById('toast-container');
+            const colorClass = type === 'error' ? 'bg-red-600' : type === 'warning' ? 'bg-yellow-600' : 'bg-green-600';
+            const iconClass = type === 'error' ? 'fa-exclamation-triangle' : type === 'warning' ? 'fa-exclamation' : 'fa-check-circle';
+
+            const toast = document.createElement('div');
+            toast.className = `toast p-4 rounded-xl shadow-lg flex items-center text-white ${colorClass}`;
+            toast.innerHTML = `<i class="fas ${iconClass} mr-3"></i> ${message}`;
+            container.appendChild(toast);
+
+            setTimeout(() => {
+                toast.style.opacity = '0';
+                toast.style.transform = 'translateX(100%)';
+                setTimeout(() => toast.remove(), 300);
+            }, 5000);
+        }
+
+        function toggleLoading(buttonId, spinnerId, isLoading, defaultText) {
+            const button = document.getElementById(buttonId);
+            const spinner = document.getElementById(spinnerId);
+            const textSpan = button.querySelector('span') || document.getElementById(buttonId + '-text');
+
+            if (isLoading) {
+                button.disabled = true;
+                if (textSpan) textSpan.textContent = 'Processing...';
+                if (spinner) spinner.classList.remove('hidden');
+            } else {
+                button.disabled = false;
+                if (textSpan) textSpan.textContent = defaultText;
+                if (spinner) spinner.classList.add('hidden');
+            }
+        }
+
+        function updateCharCount(textareaId, countId) {
+            const textarea = document.getElementById(textareaId);
+            const countSpan = document.getElementById(countId);
+            if (textarea && countSpan) {
+                countSpan.textContent = `${textarea.value.length} characters`;
+            }
+
+            if (textareaId === 'self-jd-text') {
+                checkSelfEvaluateReadiness();
+            }
+        }
+
+        function checkSelfEvaluateReadiness() {
+            const resumeFile = document.getElementById('self-resume-file').files[0];
+            const jdText = document.getElementById('self-jd-text').value.trim();
+            const evaluateBtn = document.getElementById('evaluate-btn');
+
+            evaluateBtn.disabled = !(resumeFile && jdText.length > 50);
+        }
+
+        function closeModal(modalId) {
+            document.getElementById(modalId).classList.remove('active');
+        }
+
+        // --- Tab Switching Logic ---
+
+        function switchTab(activeTab) {
+            ['upload', 'match', 'evaluate', 'metrics'].forEach(tab => {
+                document.getElementById(`tab-${tab}`)?.classList?.remove('active', 'text-white');
+                document.getElementById(`tab-${tab}`)?.classList?.add('text-dark-400', 'hover:text-dark-200');
+                document.getElementById(`content-${tab}`)?.classList?.add('hidden');
+            });
+
+            document.getElementById(`tab-${activeTab}`)?.classList?.add('active', 'text-white');
+            document.getElementById(`tab-${activeTab}`)?.classList?.remove('text-dark-400', 'hover:text-dark-200');
+            document.getElementById(`content-${activeTab}`)?.classList?.remove('hidden');
+
+            if (activeTab === 'evaluate') {
+                checkSelfEvaluateReadiness();
+            } else if (activeTab === 'metrics') {
+                initializeMetrics();
+            }
+        }
+
+        // --- Interview Evaluation Functions ---
+
+        function startInterviewSession() {
+            if (!currentEvaluationData) {
+                showToast("Please run the self-evaluation first to generate interview questions.", "warning");
+                return;
+            }
+
+            // Extract interview questions
+            interviewQuestions = currentEvaluationData?.interview_questions || [];
+            if (interviewQuestions.length === 0) {
+                showToast("No interview questions available. Please run the evaluation first.", "warning");
+                return;
+            }
+
+            // Extract role and domain from evaluation data
+            interviewRole = currentEvaluationData?.role || '';
+            interviewDomain = currentEvaluationData?.domain || '';
+
+            // Generate a session ID
+            interviewSessionId = 'interview-' + Date.now() + '-' + Math.random().toString(36).substr(2, 9);
+            currentQuestionIndex = 0;
+
+            // Show interview section
+            document.getElementById('interview-section').classList.remove('hidden');
+            
+            // Load first question
+            loadCurrentQuestion();
+            
+            // Enable answer submission
+            document.getElementById('submit-answer-btn').disabled = false;
+            
+            // Update answer character count
+            document.getElementById('interview-answer').addEventListener('input', function() {
+                document.getElementById('answer-char-count').textContent = `${this.value.length} characters`;
+            });
+
+            showToast("Interview session started! Answer the question and click 'Submit Answer'.", "success");
+        }
+
+        function resetInterviewSession() {
+            interviewSessionId = null;
+            interviewQuestions = [];
+            currentQuestionIndex = 0;
+            
+            document.getElementById('interview-section').classList.add('hidden');
+            document.getElementById('evaluation-result-container').classList.add('hidden');
+            document.getElementById('interview-answer').value = '';
+            document.getElementById('answer-char-count').textContent = '0 characters';
+            document.getElementById('submit-answer-btn').disabled = true;
+            
+            showToast("Interview session reset.", "info");
+        }
+
+        function loadCurrentQuestion() {
+            if (currentQuestionIndex >= interviewQuestions.length) {
+                document.getElementById('current-question-text').textContent = "Interview completed! All questions answered.";
+                document.getElementById('submit-answer-btn').disabled = true;
+                return;
+            }
+
+            const question = interviewQuestions[currentQuestionIndex];
+            document.getElementById('current-question-text').textContent = question;
+            document.getElementById('interview-answer').value = '';
+            document.getElementById('answer-char-count').textContent = '0 characters';
+            
+            // Update progress
+            const remaining = interviewQuestions.length - currentQuestionIndex;
+            document.getElementById('questions-remaining').textContent = `${currentQuestionIndex + 1} of ${interviewQuestions.length}`;
+        }
+
+        function loadNextQuestion() {
+            // Hide evaluation result
+            document.getElementById('evaluation-result-container').classList.add('hidden');
+            
+            // Move to next question
+            currentQuestionIndex++;
+            loadCurrentQuestion();
+        }
+
+        async function submitInterviewAnswer() {
+            const questionText = document.getElementById('current-question-text').textContent;
+            const answerText = document.getElementById('interview-answer').value.trim();
+            
+            if (!answerText) {
+                showToast("Please enter an answer before submitting.", "warning");
+                return;
+            }
+
+            if (!interviewSessionId) {
+                showToast("Interview session not started. Please click 'Start Interview'.", "error");
+                return;
+            }
+
+            toggleLoading('submit-answer-btn', 'submit-answer-spinner', true, 'Submit Answer');
+
+            try {
+                const response = await fetch(`${API_BASE_URL}/interview/evaluate`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        session_id: interviewSessionId,
+                        question: questionText,
+                        user_answer: answerText,
+                        role: interviewRole,
+                        domain: interviewDomain
+                    })
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    handleInterviewResponse(data);
+                } else {
+                    throw new Error(data.detail || 'Evaluation failed');
+                }
+            } catch (error) {
+                console.error('Interview evaluation error:', error);
+                showToast(`Evaluation failed: ${error.message}`, 'error');
+                
+                // Show fallback result
+                showFallbackEvaluationResult(questionText, answerText);
+            } finally {
+                toggleLoading('submit-answer-btn', 'submit-answer-spinner', false, 'Submit Answer');
+            }
+        }
+
+        function handleInterviewResponse(data) {
+            // Update score
+            document.getElementById('answer-score').textContent = data.answer_score || 0;
+            
+            // Update feedback
+            document.getElementById('feedback-text').textContent = data.feedback || 'No feedback provided.';
+            
+            // Update strengths
+            const strengthsList = document.getElementById('strengths-list');
+            if (data.strengths?.length > 0) {
+                strengthsList.innerHTML = data.strengths.map(s => 
+                    `<div class="strength-item"><p class="text-green-300">${s}</p></div>`
+                ).join('');
+            } else {
+                strengthsList.innerHTML = '<p class="text-dark-400 italic">Not provided</p>';
+            }
+            
+            // Update weaknesses
+            const weaknessesList = document.getElementById('weaknesses-list');
+            if (data.weaknesses?.length > 0) {
+                weaknessesList.innerHTML = data.weaknesses.map(w => 
+                    `<div class="gap-item"><p class="text-yellow-300">${w}</p></div>`
+                ).join('');
+            } else {
+                weaknessesList.innerHTML = '<p class="text-dark-400 italic">Not provided</p>';
+            }
+            
+            // Update next difficulty
+            const nextDifficultyText = document.getElementById('next-difficulty-text');
+            nextDifficultyText.textContent = data.next_difficulty || 'same';
+            
+            // Update difficulty badge class
+            nextDifficultyText.className = 'text-lg font-semibold text-white mb-1';
+            if (data.next_difficulty === 'easier') {
+                nextDifficultyText.classList.add('difficulty-easier');
+            } else if (data.next_difficulty === 'harder') {
+                nextDifficultyText.classList.add('difficulty-harder');
+            } else {
+                nextDifficultyText.classList.add('difficulty-same');
+            }
+            
+            // Update follow-up question if available
+            if (data.follow_up_question && data.follow_up_question.trim()) {
+                // Add follow-up question to the interview questions list
+                interviewQuestions.splice(currentQuestionIndex + 1, 0, data.follow_up_question);
+                document.getElementById('questions-remaining').textContent = 
+                    `${currentQuestionIndex + 1} of ${interviewQuestions.length}`;
+            }
+            
+            // Show evaluation result
+            document.getElementById('evaluation-result-container').classList.remove('hidden');
+            
+            // Show toast based on status
+            if (data.status === 'success') {
+                showToast(`Answer evaluated! Score: ${data.answer_score}%`, 'success');
+            } else {
+                showToast(`Evaluation completed with warnings: ${data.feedback?.substring(0, 100) || 'Partial result'}`, 'warning');
+            }
+        }
+
+        function showFallbackEvaluationResult(question, answer) {
+            // Provide a fallback evaluation when API fails
+            const score = Math.min(100, Math.floor(answer.length / 5));
+            
+            document.getElementById('answer-score').textContent = score;
+            document.getElementById('feedback-text').textContent = 
+                "System evaluation temporarily unavailable. Here's a basic assessment based on answer length.";
+            
+            document.getElementById('strengths-list').innerHTML = 
+                `<div class="strength-item"><p class="text-green-300">Provided a detailed answer (${answer.length} characters)</p></div>`;
+            
+            document.getElementById('weaknesses-list').innerHTML = 
+                `<div class="gap-item"><p class="text-yellow-300">AI evaluation service unavailable</p></div>`;
+            
+            document.getElementById('next-difficulty-text').textContent = 'same';
+            document.getElementById('next-difficulty-text').className = 'text-lg font-semibold text-white mb-1 difficulty-same';
+            
+            document.getElementById('evaluation-result-container').classList.remove('hidden');
+            
+            showToast("Using fallback evaluation (AI service unavailable)", "warning");
+        }
+
+        // --- Metrics Functions ---
+
+        function initializeMetrics() {
+            // Initialize charts if they don't exist
+            if (!scoreDistributionChart) {
+                createCharts();
+                updateMetricsData();
+            }
+        }
+
+        function createCharts() {
+            const ctx1 = document.getElementById('scoreDistributionChart')?.getContext('2d');
+            if (ctx1) {
+                scoreDistributionChart = new Chart(ctx1, {
+                    type: 'bar',
+                    data: {
+                        labels: ['0-50%', '51-60%', '61-70%', '71-80%', '81-90%', '91-100%'],
+                        datasets: [{
+                            label: 'Number of Candidates',
+                            data: [45, 78, 120, 245, 189, 92],
+                            backgroundColor: [
+                                'rgba(239, 68, 68, 0.7)',
+                                'rgba(251, 146, 60, 0.7)',
+                                'rgba(251, 191, 36, 0.7)',
+                                'rgba(59, 130, 246, 0.7)',
+                                'rgba(34, 197, 94, 0.7)',
+                                'rgba(16, 185, 129, 0.7)'
+                            ],
+                            borderColor: [
+                                'rgba(239, 68, 68, 1)',
+                                'rgba(251, 146, 60, 1)',
+                                'rgba(251, 191, 36, 1)',
+                                'rgba(59, 130, 246, 1)',
+                                'rgba(34, 197, 94, 1)',
+                                'rgba(16, 185, 129, 1)'
+                            ],
+                            borderWidth: 1
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                labels: {
+                                    color: '#e2e8f0'
+                                }
+                            }
+                        },
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                grid: {
+                                    color: 'rgba(148, 163, 184, 0.1)'
+                                },
+                                ticks: {
+                                    color: '#94a3b8'
+                                }
+                            },
+                            x: {
+                                grid: {
+                                    color: 'rgba(148, 163, 184, 0.1)'
+                                },
+                                ticks: {
+                                    color: '#94a3b8'
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+
+            const ctx2 = document.getElementById('skillsChart')?.getContext('2d');
+            if (ctx2) {
+                skillsChart = new Chart(ctx2, {
+                    type: 'horizontalBar',
+                    data: {
+                        labels: ['Python', 'JavaScript', 'React', 'AWS', 'SQL', 'Docker', 'Kubernetes', 'Machine Learning', 'TensorFlow', 'Node.js'],
+                        datasets: [{
+                            label: 'Frequency',
+                            data: [845, 732, 689, 567, 523, 478, 412, 389, 345, 312],
+                            backgroundColor: 'rgba(59, 130, 246, 0.7)',
+                            borderColor: 'rgba(59, 130, 246, 1)',
+                            borderWidth: 1
+                        }]
+                },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        indexAxis: 'y',
+                        plugins: {
+                            legend: {
+                                labels: {
+                                    color: '#e2e8f0'
+                                }
+                            }
+                        },
+                        scales: {
+                            x: {
+                                beginAtZero: true,
+                                grid: {
+                                    color: 'rgba(148, 163, 184, 0.1)'
+                                },
+                                ticks: {
+                                    color: '#94a3b8'
+                                }
+                            },
+                            y: {
+                                grid: {
+                                    color: 'rgba(148, 163, 184, 0.1)'
+                                },
+                                ticks: {
+                                    color: '#94a3b8'
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+
+            const ctx3 = document.getElementById('domainChart')?.getContext('2d');
+            if (ctx3) {
+                domainChart = new Chart(ctx3, {
+                    type: 'doughnut',
+                    data: {
+                        labels: ['ML/AI', 'Backend', 'Frontend', 'Data Science', 'Full Stack', 'DevOps', 'Mobile'],
+                        datasets: [{
+                            data: [28, 22, 18, 15, 10, 5, 2],
+                            backgroundColor: [
+                                'rgba(139, 92, 246, 0.7)',
+                                'rgba(59, 130, 246, 0.7)',
+                                'rgba(6, 182, 212, 0.7)',
+                                'rgba(34, 197, 94, 0.7)',
+                                'rgba(245, 158, 11, 0.7)',
+                                'rgba(239, 68, 68, 0.7)',
+                                'rgba(236, 72, 153, 0.7)'
+                            ],
+                            borderColor: [
+                                'rgba(139, 92, 246, 1)',
+                                'rgba(59, 130, 246, 1)',
+                                'rgba(6, 182, 212, 1)',
+                                'rgba(34, 197, 94, 1)',
+                                'rgba(245, 158, 11, 1)',
+                                'rgba(239, 68, 68, 1)',
+                                'rgba(236, 72, 153, 1)'
+                            ],
+                            borderWidth: 1
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                position: 'right',
+                                labels: {
+                                    color: '#e2e8f0',
+                                    padding: 20
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+
+            const ctx4 = document.getElementById('activityChart')?.getContext('2d');
+            if (ctx4) {
+                activityChart = new Chart(ctx4, {
+                    type: 'line',
+                    data: {
+                        labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul'],
+                        datasets: [
+                            {
+                                label: 'Resume Uploads',
+                                data: [120, 145, 178, 210, 245, 280, 310],
+                                borderColor: 'rgba(59, 130, 246, 1)',
+                                backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                                fill: true,
+                                tension: 0.4
+                            },
+                            {
+                                label: 'Job Matches',
+                                data: [85, 110, 135, 160, 195, 220, 250],
+                                borderColor: 'rgba(16, 185, 129, 1)',
+                                backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                                fill: true,
+                                tension: 0.4
+                            }
+                        ]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                labels: {
+                                    color: '#e2e8f0'
+                                }
+                            }
+                        },
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                grid: {
+                                    color: 'rgba(148, 163, 184, 0.1)'
+                                },
+                                ticks: {
+                                    color: '#94a3b8'
+                                }
+                            },
+                            x: {
+                                grid: {
+                                    color: 'rgba(148, 163, 184, 0.1)'
+                                },
+                                ticks: {
+                                    color: '#94a3b8'
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+        }
+
+        function updateMetricsData() {
+            // Simulate updating metrics data
+            const metrics = {
+                totalCandidates: 1247,
+                avgMatchScore: 78.5,
+                parsedResumes: 892,
+                avgProcessing: 2.4
+            };
+
+            const totalCandidatesEl = document.getElementById('total-candidates');
+            const avgMatchScoreEl = document.getElementById('avg-match-score');
+            const parsedResumesEl = document.getElementById('parsed-resumes');
+            const avgProcessingEl = document.getElementById('avg-processing');
+
+            if (totalCandidatesEl) totalCandidatesEl.textContent = metrics.totalCandidates.toLocaleString();
+            if (avgMatchScoreEl) avgMatchScoreEl.textContent = `${metrics.avgMatchScore}%`;
+            if (parsedResumesEl) parsedResumesEl.textContent = metrics.parsedResumes.toLocaleString();
+            if (avgProcessingEl) avgProcessingEl.textContent = `${metrics.avgProcessing}s`;
+        }
+
+        async function refreshMetrics() {
+            toggleLoading('refresh-metrics-btn', 'refresh-metrics-spinner', true, 'Refresh Metrics');
+            
+            try {
+                // Simulate API call to fetch updated metrics
+                await new Promise(resolve => setTimeout(resolve, 1500));
+                
+                // Update with slightly different numbers to show refresh
+                const newMetrics = {
+                    totalCandidates: 1247 + Math.floor(Math.random() * 50),
+                    avgMatchScore: 78.5 + (Math.random() * 2 - 1),
+                    parsedResumes: 892 + Math.floor(Math.random() * 30),
+                    avgProcessing: 2.4 + (Math.random() * 0.5 - 0.25)
+                };
+
+                const totalCandidatesEl = document.getElementById('total-candidates');
+                const avgMatchScoreEl = document.getElementById('avg-match-score');
+                const parsedResumesEl = document.getElementById('parsed-resumes');
+                const avgProcessingEl = document.getElementById('avg-processing');
+
+                if (totalCandidatesEl) totalCandidatesEl.textContent = newMetrics.totalCandidates.toLocaleString();
+                if (avgMatchScoreEl) avgMatchScoreEl.textContent = `${newMetrics.avgMatchScore.toFixed(1)}%`;
+                if (parsedResumesEl) parsedResumesEl.textContent = newMetrics.parsedResumes.toLocaleString();
+                if (avgProcessingEl) avgProcessingEl.textContent = `${newMetrics.avgProcessing.toFixed(1)}s`;
+
+                // Update charts with new data
+                if (scoreDistributionChart) {
+                    scoreDistributionChart.data.datasets[0].data = scoreDistributionChart.data.datasets[0].data.map(
+                        value => value + Math.floor(Math.random() * 20 - 10)
+                    );
+                    scoreDistributionChart.update();
+                }
+
+                showToast('Metrics updated successfully!', 'success');
+            } catch (error) {
+                console.error('Error refreshing metrics:', error);
+                showToast('Failed to refresh metrics', 'error');
+            } finally {
+                toggleLoading('refresh-metrics-btn', 'refresh-metrics-spinner', false, 'Refresh Metrics');
+            }
+        }
+
+        // --- File Upload Logic ---
+
+        function handleFileSelect(event, context) {
+            const input = event.target;
+            const file = input.files[0];
+            const fileInfoElement = context === 'upload' ? document.getElementById('file-info') : document.getElementById('self-file-info');
+            const fileNameElement = context === 'upload' ? document.getElementById('file-name') : document.getElementById('self-file-name');
+            const defaultStateElement = context === 'upload' ? document.getElementById('upload-default-state') : document.getElementById('self-upload-default-state');
+            const parseBtn = document.getElementById('parse-btn');
+
+            if (file) {
+                if (file.type !== 'application/pdf') {
+                    showToast("Only PDF files are supported.", "error");
+                    input.value = '';
+                    return;
+                }
+                
+                fileNameElement.textContent = file.name;
+                defaultStateElement.classList.add('hidden');
+                fileInfoElement.classList.remove('hidden');
+
+                if (context === 'upload') {
+                    parseBtn.disabled = false;
+                } else if (context === 'evaluate') {
+                    checkSelfEvaluateReadiness();
+                }
+            } else {
+                removeFile(context);
+            }
+        }
+        
+        function removeFile(context) {
+            const input = context === 'upload' ? document.getElementById('resume-file') : document.getElementById('self-resume-file');
+            const fileInfoElement = context === 'upload' ? document.getElementById('file-info') : document.getElementById('self-file-info');
+            const defaultStateElement = context === 'upload' ? document.getElementById('upload-default-state') : document.getElementById('self-upload-default-state');
+            const parseBtn = document.getElementById('parse-btn');
+            const parseResult = document.getElementById('parse-result');
+
+            input.value = '';
+            fileInfoElement.classList.add('hidden');
+            defaultStateElement.classList.remove('hidden');
+            
+            if (context === 'upload') {
+                parseBtn.disabled = true;
+                parseResult.classList.add('hidden');
+            } else if (context === 'evaluate') {
+                checkSelfEvaluateReadiness();
+            }
+        }
+
+        // Drag & Drop
+        const uploadArea = document.getElementById('upload-area');
+        if (uploadArea) {
+            ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+                uploadArea.addEventListener(eventName, preventDefaults, false);
+                document.body.addEventListener(eventName, preventDefaults, false);
+            });
+
+            ['dragenter', 'dragover'].forEach(eventName => {
+                uploadArea.addEventListener(eventName, () => uploadArea.classList.add('dragover'), false);
+            });
+
+            ['dragleave', 'drop'].forEach(eventName => {
+                uploadArea.addEventListener(eventName, () => uploadArea.classList.remove('dragover'), false);
+            });
+
+            function preventDefaults(e) {
+                e.preventDefault();
+                e.stopPropagation();
+            }
+
+            uploadArea.addEventListener('drop', handleDrop, false);
+
+            function handleDrop(e) {
+                const dt = e.dataTransfer;
+                const files = dt.files;
+                document.getElementById('resume-file').files = files;
+                handleFileSelect({ target: document.getElementById('resume-file') }, 'upload');
+            }
+        }
+
+        // --- Core Application Logic (API Calls) ---
+
+        /**
+         * 1. Upload Resume and Parse (Upload Tab) - ENHANCED TO SHOW ALL DATA
+         */
+        async function uploadAndParseResume() {
+            const input = document.getElementById('resume-file');
+            const file = input.files[0];
+
+            if (!file) {
+                showToast("Please select a PDF file first.", "warning");
+                return;
+            }
+
+            toggleLoading('parse-btn', 'parse-spinner', true, 'Upload & Parse');
+            const formData = new FormData();
+            formData.append('file', file);
+
+            try {
+                const response = await fetch(`${API_BASE_URL}/upload-resume`, {
+                    method: 'POST',
+                    body: formData,
+                });
+
+                const data = await response.json();
+                
+                if (response.ok) {
+                    currentParsedResumeData = data; // Store for modal view
+                    
+                    // Extract all parsed information
+                    const parsed = data.parsed_data || {};
+                    const fullParsed = data.parsed_full || parsed;
+                    
+                    // Basic info with fallbacks
+                    const name = fullParsed.candidate_name || parsed.candidate_name || "N/A";
+                    const email = fullParsed.email || parsed.email || "N/A";
+                    const phone = fullParsed.phone_number || parsed.phone_number || "N/A";
+                    const role = fullParsed.primary_role_title || parsed.primary_role_title || "N/A";
+                    const domain = fullParsed.primary_domain || parsed.primary_domain || "N/A";
+                    const experience = fullParsed.total_experience_years || parsed.total_experience_years || "N/A";
+                    const education = fullParsed.highest_education || parsed.highest_education || "N/A";
+                    const summary = fullParsed.summary_text || parsed.summary_text || "No summary available";
+                    
+                    // Extract skills
+                    let skills = [];
+                    if (fullParsed.skills && Array.isArray(fullParsed.skills)) {
+                        skills = fullParsed.skills.map(skill => {
+                            if (typeof skill === 'string') return skill;
+                            if (skill.skill_name) return skill.skill_name;
+                            if (skill.name) return skill.name;
+                            return "Skill";
+                        });
+                    } else if (parsed.skills && Array.isArray(parsed.skills)) {
+                        skills = parsed.skills.map(skill => {
+                            if (typeof skill === 'string') return skill;
+                            if (skill.skill_name) return skill.skill_name;
+                            if (skill.name) return skill.name;
+                            return "Skill";
+                        });
+                    }
+                    
+                    // Display parsed data in UI
+                    const parsedDetails = document.getElementById('parsed-details');
+                    if (parsedDetails) {
+                        parsedDetails.innerHTML = `
+                            <div class="space-y-4">
+                                <div class="grid grid-cols-2 gap-4">
+                                    <div class="info-item">
+                                        <div class="info-label">Candidate ID</div>
+                                        <div class="info-value font-semibold">${data.candidate_id}</div>
+                                    </div>
+                                    <div class="info-item">
+                                        <div class="info-label">Name</div>
+                                        <div class="info-value font-semibold">${name}</div>
+                                    </div>
+                                </div>
+                                
+                                <div class="grid grid-cols-2 gap-4">
+                                    <div class="info-item">
+                                        <div class="info-label">Primary Role</div>
+                                        <div class="info-value">${role}</div>
+                                    </div>
+                                    <div class="info-item">
+                                        <div class="info-label">Domain</div>
+                                        <div class="info-value">${domain}</div>
+                                    </div>
+                                </div>
+                                
+                                <div class="grid grid-cols-2 gap-4">
+                                    <div class="info-item">
+                                        <div class="info-label">Experience</div>
+                                        <div class="info-value">${experience} years</div>
+                                    </div>
+                                    <div class="info-item">
+                                        <div class="info-label">Highest Education</div>
+                                        <div class="info-value">${education}</div>
+                                    </div>
+                                </div>
+                                
+                                <div class="grid grid-cols-2 gap-4">
+                                    <div class="info-item">
+                                        <div class="info-label">Email</div>
+                                        <div class="info-value">${email}</div>
+                                    </div>
+                                    <div class="info-item">
+                                        <div class="info-label">Phone</div>
+                                        <div class="info-value">${phone}</div>
+                                    </div>
+                                </div>
+                                
+                                ${skills.length > 0 ? `
+                                <div class="info-item">
+                                    <div class="info-label">Skills (${skills.length})</div>
+                                    <div class="skills-container">
+                                        ${skills.slice(0, 8).map(skill => `
+                                            <span class="skill-pill">${skill}</span>
+                                        `).join('')}
+                                        ${skills.length > 8 ? `<span class="skill-pill">+${skills.length - 8} more</span>` : ''}
+                                    </div>
+                                </div>
+                                ` : ''}
+                                
+                                <div class="info-item">
+                                    <div class="info-label">Summary</div>
+                                    <div class="summary-text">
+                                        ${summary.length > 150 ? summary.substring(0, 150) + '...' : summary}
+                                    </div>
+                                </div>
+                            </div>
+                        `;
+                    }
+                    
+                    document.getElementById('parse-result').classList.remove('hidden');
+                    showToast(`Resume for ${name} parsed and stored! ${skills.length} skills extracted.`, 'success');
+
+                } else {
+                    showToast(`Parsing Failed: ${data.detail || 'Unknown error'}`, 'error');
+                }
+            } catch (error) {
+                console.error('API Error:', error);
+                showToast('Network error during parsing. Is the backend running?', 'error');
+            } finally {
+                toggleLoading('parse-btn', 'parse-spinner', false, 'Upload & Parse');
+            }
+        }
+
+        /**
+         * Show all parsed data in modal
+         */
+        function showAllParsedData() {
+            if (!currentParsedResumeData) {
+                showToast("No parsed data available.", "warning");
+                return;
+            }
+
+            const parsed = currentParsedResumeData.parsed_data || {};
+            const fullParsed = currentParsedResumeData.parsed_full || parsed;
+            
+            // Extract all data
+            const name = fullParsed.candidate_name || parsed.candidate_name || "N/A";
+            const email = fullParsed.email || parsed.email || "N/A";
+            const phone = fullParsed.phone_number || parsed.phone_number || "N/A";
+            const role = fullParsed.primary_role_title || parsed.primary_role_title || "N/A";
+            const domain = fullParsed.primary_domain || parsed.primary_domain || "N/A";
+            const experience = fullParsed.total_experience_years || parsed.total_experience_years || "N/A";
+            const education = fullParsed.highest_education || parsed.highest_education || "N/A";
+            const summary = fullParsed.summary_text || parsed.summary_text || "No summary available";
+            
+            // Extract skills
+            let skills = [];
+            if (fullParsed.skills && Array.isArray(fullParsed.skills)) {
+                skills = fullParsed.skills.map(skill => {
+                    if (typeof skill === 'string') return skill;
+                    if (skill.skill_name) return skill.skill_name;
+                    if (skill.name) return skill.name;
+                    return "Skill";
+                });
+            } else if (parsed.skills && Array.isArray(parsed.skills)) {
+                skills = parsed.skills.map(skill => {
+                    if (typeof skill === 'string') return skill;
+                    if (skill.skill_name) return skill.skill_name;
+                    if (skill.name) return skill.name;
+                    return "Skill";
+                });
+            }
+
+            const modalContent = document.getElementById('modal-parsed-content');
+            if (modalContent) {
+                modalContent.innerHTML = `
+                    <div class="space-y-6">
+                        <div class="bg-dark-800 p-6 rounded-xl">
+                            <h4 class="text-xl font-bold text-primary-300 mb-4">Candidate Information</h4>
+                            <div class="grid grid-cols-2 gap-4">
+                                <div>
+                                    <p class="text-sm text-dark-400">Candidate ID</p>
+                                    <p class="text-white font-semibold">${currentParsedResumeData.candidate_id}</p>
+                                </div>
+                                <div>
+                                    <p class="text-sm text-dark-400">Name</p>
+                                    <p class="text-white font-semibold">${name}</p>
+                                </div>
+                                <div>
+                                    <p class="text-sm text-dark-400">Email</p>
+                                    <p class="text-white">${email}</p>
+                                </div>
+                                <div>
+                                    <p class="text-sm text-dark-400">Phone</p>
+                                    <p class="text-white">${phone}</p>
+                                </div>
+                                <div>
+                                    <p class="text-sm text-dark-400">Primary Role</p>
+                                    <p class="text-white">${role}</p>
+                                </div>
+                                <div>
+                                    <p class="text-sm text-dark-400">Domain</p>
+                                    <p class="text-white">${domain}</p>
+                                </div>
+                                <div>
+                                    <p class="text-sm text-dark-400">Experience</p>
+                                    <p class="text-white">${experience} years</p>
+                                </div>
+                                <div>
+                                    <p class="text-sm text-dark-400">Highest Education</p>
+                                    <p class="text-white">${education}</p>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        ${skills.length > 0 ? `
+                        <div class="bg-dark-800 p-6 rounded-xl">
+                            <h4 class="text-xl font-bold text-primary-300 mb-4">Skills (${skills.length})</h4>
+                            <div class="flex flex-wrap gap-2">
+                                ${skills.map(skill => `
+                                    <span class="pill">${skill}</span>
+                                `).join('')}
+                            </div>
+                        </div>
+                        ` : ''}
+                        
+                        <div class="bg-dark-800 p-6 rounded-xl">
+                            <h4 class="text-xl font-bold text-primary-300 mb-4">Professional Summary</h4>
+                            <div class="summary-text">
+                                ${summary}
+                            </div>
+                        </div>
+                        
+                        <div class="bg-dark-800 p-6 rounded-xl">
+                            <h4 class="text-xl font-bold text-primary-300 mb-4">Technical Details</h4>
+                            <div class="grid grid-cols-2 gap-4">
+                                <div>
+                                    <p class="text-sm text-dark-400">Embedding Dimensions</p>
+                                    <p class="text-white">${currentParsedResumeData.embedding?.dimensions || 'N/A'}</p>
+                                </div>
+                                <div>
+                                    <p class="text-sm text-dark-400">Storage Engine</p>
+                                    <p class="text-white">${currentParsedResumeData.embedding?.stored_in || 'pgvector'}</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }
+            
+            document.getElementById('parsed-data-modal').classList.add('active');
+        }
+
+        /**
+         * 2. Match Candidates (Job Match Tab)
+         */
+        async function matchCandidates() {
+            const jdText = document.getElementById('jd-text')?.value?.trim();
+            const domain = document.getElementById('domain-filter')?.value;
+            const topK = document.getElementById('top-k')?.value;
+
+            if (!jdText || jdText.length < 50) {
+                showToast("Please enter a comprehensive job description (min. 50 characters).", "warning");
+                return;
+            }
+
+            toggleLoading('match-btn', 'match-spinner', true, 'Find & Score Candidates');
+            const matchResults = document.getElementById('match-results');
+            const candidatesList = document.getElementById('candidates-list');
+            
+            if (matchResults) matchResults.classList.add('hidden');
+            if (candidatesList) candidatesList.innerHTML = '';
+
+            try {
+                const response = await fetch(`${API_BASE_URL}/evaluate-jd`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        jd_text: jdText,
+                        domain: domain || null,
+                        top_k: parseInt(topK, 10),
+                    }),
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    matchedCandidatesData = data.results || [];
+                    renderCandidates(matchedCandidatesData);
+                    if (matchResults) matchResults.classList.remove('hidden');
+                    showToast(`Found and scored ${matchedCandidatesData.length} candidates.`, 'success');
+                } else {
+                    showToast(`Matching Failed: ${data.detail || 'Could not retrieve candidates.'}`, 'error');
+                }
+            } catch (error) {
+                console.error('API Error:', error);
+                showToast('Network error during candidate matching. Is the backend running?', 'error');
+            } finally {
+                toggleLoading('match-btn', 'match-spinner', false, 'Find & Score Candidates');
+            }
+        }
+
+        function getScoreClass(score) {
+            if (score >= 90) return 'score-90';
+            if (score >= 80) return 'score-80';
+            if (score >= 70) return 'score-70';
+            if (score >= 60) return 'score-60';
+            return 'score-50';
+        }
+
+        function renderCandidates(candidates) {
+            const list = document.getElementById('candidates-list');
+            const resultsCount = document.getElementById('results-count');
+            
+            if (!list) return;
+
+            list.innerHTML = '';
+            if (resultsCount) resultsCount.textContent = `${candidates.length} results`;
+
+            candidates.forEach((candidate, index) => {
+                const scoreClass = getScoreClass(candidate.score_100);
+                const cardHtml = `
+                    <div class="card p-5 candidate-card" onclick="showCandidateDetails(${index})">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <h4 class="text-lg font-semibold text-white">${candidate.candidate_name || 'Candidate'}</h4>
+                                <div class="flex items-center mt-2">
+                                    <span class="text-sm text-dark-400 mr-4">
+                                        <i class="fas fa-briefcase mr-1"></i> ${candidate.primary_role || 'N/A'}
+                                    </span>
+                                    <span class="text-sm text-dark-400">
+                                        <i class="fas fa-chart-line mr-1"></i> ${candidate.total_experience || 'N/A'} years
+                                    </span>
+                                </div>
+                                <div class="mt-3">
+                                    ${candidate.strengths.slice(0, 2).map(strength => `
+                                        <span class="pill bg-green-900/30 text-green-300">${strength.substring(0, 30)}...</span>
+                                    `).join('')}
+                                </div>
+                            </div>
+                            <div class="text-right">
+                                <span class="score-badge ${scoreClass} text-lg font-bold px-4 py-2">${candidate.score_100}%</span>
+                                <p class="text-xs text-dark-400 mt-2">Match Score</p>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                list.innerHTML += cardHtml;
+            });
+        }
+        
+        function showCandidateDetails(index) {
+            const candidate = matchedCandidatesData[index];
+            const modalContent = document.getElementById('modal-candidate-content');
+            
+            if (!candidate || !modalContent) return;
+
+            const detailHtml = `
+                <div class="bg-dark-800 p-6 rounded-xl space-y-4">
+                    <h4 class="text-xl font-bold text-primary-300">${candidate.candidate_name || 'N/A'}</h4>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <p class="text-dark-400 text-sm">Role</p>
+                            <p class="text-white">${candidate.primary_role || 'N/A'}</p>
+                        </div>
+                        <div>
+                            <p class="text-dark-400 text-sm">Domain</p>
+                            <p class="text-white">${candidate.primary_domain || 'N/A'}</p>
+                        </div>
+                        <div>
+                            <p class="text-dark-400 text-sm">Experience</p>
+                            <p class="text-white">${candidate.total_experience || 'N/A'} years</p>
+                        </div>
+                        <div>
+                            <p class="text-dark-400 text-sm">Match Score</p>
+                            <p class="text-white text-lg font-bold ${getScoreClass(candidate.score_100)}">${candidate.score_100}%</p>
+                        </div>
+                    </div>
+                    
+                    <div>
+                        <h5 class="text-lg font-semibold text-white mt-4 border-b border-dark-700 pb-2">Strengths:</h5>
+                        <div class="mt-2 space-y-2">
+                            ${candidate.strengths.map(strength => `
+                                <div class="strength-item">
+                                    <p class="text-green-300">${strength}</p>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                    
+                    <div>
+                        <h5 class="text-lg font-semibold text-white mt-4 border-b border-dark-700 pb-2">Gaps:</h5>
+                        <div class="mt-2 space-y-2">
+                            ${candidate.gaps.map(gap => `
+                                <div class="gap-item">
+                                    <p class="text-yellow-300">${gap}</p>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                    
+                    <div>
+                        <h5 class="text-lg font-semibold text-white mt-4 border-b border-dark-700 pb-2">Interview Questions:</h5>
+                        <div class="mt-2 space-y-2">
+                            ${candidate.interview_questions.map((question, qIndex) => `
+                                <div class="question-item">
+                                    <p class="text-primary-300">${qIndex + 1}. ${question}</p>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            modalContent.innerHTML = detailHtml;
+            document.getElementById('candidate-detail-modal').classList.add('active');
+        }
+
+        /**
+         * 3. Agentic Self Evaluation (NEW - Using Agentic Backend)
+         */
+        async function agenticSelfEvaluate() {
+            const resumeInput = document.getElementById('self-resume-file');
+            const resumeFile = resumeInput.files[0];
+            const jdText = document.getElementById('self-jd-text')?.value?.trim();
+
+            if (!resumeFile || !jdText || jdText.length < 50) {
+                showToast("Please upload a resume and paste the job description.", "warning");
+                return;
+            }
+
+            toggleLoading('evaluate-btn', 'evaluate-spinner', true, 'Evaluate My Fit (AI Agent)');
+            const evaluateResults = document.getElementById('evaluate-results');
+            if (evaluateResults) evaluateResults.classList.add('hidden');
+            
+            const formData = new FormData();
+            formData.append('file', resumeFile);
+            formData.append('jd_text', jdText);
+
+            try {
+                const response = await fetch(`${API_BASE_URL}/agent-self-evaluation`, {
+                    method: 'POST',
+                    body: formData,
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    currentEvaluationData = data;
+                    renderAgenticEvaluationResults(data);
+                    if (evaluateResults) evaluateResults.classList.remove('hidden');
+                    
+                    if (data.status === 'partial') {
+                        showToast(`Evaluation completed with partial results: ${data.confidence_feedback?.substring(0, 100) || 'Some features may be limited.'}`, 'warning');
+                    } else if (data.status === 'failed') {
+                        showToast(`Evaluation failed: ${data.confidence_feedback?.substring(0, 100) || 'Please try again.'}`, 'error');
+                    } else {
+                        showToast(`AI Agent evaluation complete! Score: ${data.score_100}%`, 'success');
+                    }
+                } else {
+                    showToast(`Evaluation Failed: ${data.detail || 'Could not perform evaluation.'}`, 'error');
+                }
+            } catch (error) {
+                console.error('API Error:', error);
+                showToast('Network error during evaluation. Is the backend running?', 'error');
+            } finally {
+                toggleLoading('evaluate-btn', 'evaluate-spinner', false, 'Evaluate My Fit (AI Agent)');
+            }
+        }
+
+        function renderAgenticEvaluationResults(data) {
+            // Extract score with fallback to old field if needed
+            const score = data.score_100 || 0;
+            const circle = document.getElementById('score-circle');
+            const scoreText = document.getElementById('score-text');
+            
+            if (circle && scoreText) {
+                const circumference = 2 * Math.PI * 45;
+                const offset = circumference - (score / 100) * circumference;
+
+                // Update Score Circle
+                circle.style.strokeDashoffset = offset;
+                circle.style.stroke = getScoreColor(score);
+                scoreText.textContent = `${score}%`;
+            }
+            
+            const scoreCategory = document.getElementById('score-category');
+            if (scoreCategory) scoreCategory.textContent = getScoreCategory(score);
+            
+            // Update confidence level if available
+            const confidenceLevel = document.getElementById('confidence-level');
+            if (confidenceLevel) {
+                if (data.confidence_level) {
+                    confidenceLevel.textContent = `Confidence: ${data.confidence_level}`;
+                    confidenceLevel.classList.remove('hidden');
+                } else {
+                    confidenceLevel.classList.add('hidden');
+                }
+            }
+            
+            // Enable buttons based on agent decisions and data availability
+            const viewDetailsBtn = document.getElementById('view-details-btn');
+            const generateQuestionsBtn = document.getElementById('generate-questions-btn');
+            const viewRoadmapBtn = document.getElementById('view-roadmap-btn');
+            const viewStrengthsBtn = document.getElementById('view-strengths-btn');
+            const viewGapsBtn = document.getElementById('view-gaps-btn');
+            
+            // Enable details button if we have any data
+            if (viewDetailsBtn) viewDetailsBtn.disabled = false;
+            
+            // Enable interview questions button ONLY if agent generated questions
+            if (generateQuestionsBtn) generateQuestionsBtn.disabled = !(data.interview_questions && data.interview_questions.length > 0);
+            
+            // Enable learning roadmap button ONLY if agent generated roadmap
+            if (viewRoadmapBtn) viewRoadmapBtn.disabled = !(data.learning_roadmap && data.learning_roadmap.length > 0);
+            
+            // Enable strengths/gaps buttons if data exists
+            if (viewStrengthsBtn) viewStrengthsBtn.disabled = !(data.strengths && data.strengths.length > 0);
+            if (viewGapsBtn) viewGapsBtn.disabled = !(data.gaps && data.gaps.length > 0);
+
+            // Render Strengths Preview (safely)
+            const strengthsPreview = document.getElementById('strengths-preview');
+            const strengthsCount = document.getElementById('strengths-count');
+            if (strengthsPreview && strengthsCount) {
+                if (data.strengths && data.strengths.length > 0) {
+                    strengthsPreview.innerHTML = data.strengths.slice(0, 3).map(s => `
+                        <div class="strength-item">
+                            <p class="font-medium text-green-200"><i class="fas fa-check-circle mr-2 text-green-400"></i> ${s}</p>
+                        </div>
+                    `).join('');
+                    strengthsCount.textContent = `${data.strengths.length} strengths`;
+                } else {
+                    strengthsPreview.innerHTML = '<p class="text-dark-400 italic">No major strengths identified.</p>';
+                    strengthsCount.textContent = '0 strengths';
+                }
+            }
+
+            // Render Gaps Preview (safely)
+            const gapsPreview = document.getElementById('gaps-preview');
+            const gapsCount = document.getElementById('gaps-count');
+            if (gapsPreview && gapsCount) {
+                if (data.gaps && data.gaps.length > 0) {
+                    gapsPreview.innerHTML = data.gaps.slice(0, 3).map(g => `
+                        <div class="gap-item">
+                            <p class="font-medium text-yellow-200"><i class="fas fa-exclamation-circle mr-2 text-yellow-400"></i> ${g}</p>
+                        </div>
+                    `).join('');
+                    gapsCount.textContent = `${data.gaps.length} gaps`;
+                } else {
+                    gapsPreview.innerHTML = '<p class="text-dark-400 italic">No significant gaps found. Great fit!</p>';
+                    gapsCount.textContent = '0 gaps';
+                }
+            }
+
+            // Show agent decision banner if available
+            const agentBanner = document.getElementById('agent-decision-banner');
+            const agentDecisionText = document.getElementById('agent-decision-text');
+            const agentActions = document.getElementById('agent-actions');
+            
+            if (agentBanner && agentDecisionText && agentActions) {
+                if (data.next_action || data.decision_reasoning) {
+                    agentBanner.classList.remove('hidden');
+                    
+                    // Set decision text
+                    if (data.decision_reasoning) {
+                        agentDecisionText.textContent = data.decision_reasoning;
+                    } else if (data.next_action) {
+                        agentDecisionText.textContent = `Agent decided: ${data.next_action}`;
+                    }
+                    
+                    // Show action badges based on what the agent generated
+                    agentActions.innerHTML = '';
+                    
+                    if (data.interview_questions && data.interview_questions.length > 0) {
+                        agentActions.innerHTML += `
+                            <span class="pill bg-blue-900/30 text-blue-300">
+                                <i class="fas fa-question-circle mr-1"></i> ${data.interview_questions.length} Interview Questions
+                            </span>
+                        `;
+                    }
+                    
+                    if (data.learning_roadmap && data.learning_roadmap.length > 0) {
+                        agentActions.innerHTML += `
+                            <span class="pill bg-purple-900/30 text-purple-300">
+                                <i class="fas fa-road mr-1"></i> ${data.learning_roadmap.length} Learning Steps
+                            </span>
+                        `;
+                    }
+                    
+                    if (data.strengths && data.strengths.length > 0) {
+                        agentActions.innerHTML += `
+                            <span class="pill bg-green-900/30 text-green-300">
+                                <i class="fas fa-thumbs-up mr-1"></i> ${data.strengths.length} Strengths
+                            </span>
+                        `;
+                    }
+                } else {
+                    agentBanner.classList.add('hidden');
+                }
+            }
+            
+            // Show interview section if questions are available
+            if (data.interview_questions && data.interview_questions.length > 0) {
+                const interviewSection = document.getElementById('interview-section');
+                if (interviewSection) {
+                    interviewSection.classList.remove('hidden');
+                    // Reset interview state for new questions
+                    interviewQuestions = data.interview_questions;
+                    interviewRole = data.role || '';
+                    interviewDomain = data.domain || '';
+                    currentQuestionIndex = 0;
+                    interviewSessionId = null;
+                }
+            }
+        }
+
+        function getScoreColor(score) {
+            if (score >= 90) return '#10b981';
+            if (score >= 80) return '#4ade80';
+            if (score >= 70) return '#fbbf24';
+            if (score >= 60) return '#fb923c';
+            return '#f87171';
+        }
+
+        function getScoreCategory(score) {
+            if (score >= 90) return 'Exceptional Fit: Top Tier Candidate';
+            if (score >= 80) return 'Strong Fit: Highly Recommended';
+            if (score >= 70) return 'Good Fit: Meets Most Requirements';
+            if (score >= 60) return 'Moderate Fit: Some Gaps';
+            return 'Low Fit: Significant Gaps Identified';
+        }
+
+        // --- Modals for Self Evaluation ---
+
+        function showEvaluationDetails() {
+            if (!currentEvaluationData) return showToast("Run evaluation first.", "warning");
+            
+            const modalContent = document.getElementById('modal-details-content');
+            if (!modalContent) return;
+            
+            const detailsHtml = `
+                <div class="space-y-4">
+                    <div class="bg-dark-800 p-4 rounded-lg">
+                        <h4 class="text-lg font-bold text-primary-300 mb-2">Overall Score: ${currentEvaluationData.score_100 || 0}%</h4>
+                        ${currentEvaluationData.confidence_level ? 
+                            `<p class="text-blue-300 mb-2">Confidence Level: ${currentEvaluationData.confidence_level}</p>` : ''}
+                        ${currentEvaluationData.status ? 
+                            `<p class="text-${currentEvaluationData.status === 'success' ? 'green' : currentEvaluationData.status === 'partial' ? 'yellow' : 'red'}-300">
+                                Status: ${currentEvaluationData.status.charAt(0).toUpperCase() + currentEvaluationData.status.slice(1)}
+                            </p>` : ''}
+                    </div>
+                    
+                    ${currentEvaluationData.personalized_advice ? `
+                    <div class="bg-dark-800 p-4 rounded-lg border-l-4 border-primary-500">
+                        <h5 class="text-lg font-semibold text-primary-300 mb-2">AI Decision Rationale</h5>
+                        <p class="text-dark-200">${currentEvaluationData.personalized_advice}</p>
+                    </div>
+                    ` : ''}
+                    
+                    ${currentEvaluationData.decision_reasoning ? `
+                    <div class="bg-dark-800 p-4 rounded-lg">
+                        <h5 class="text-lg font-semibold text-white mb-2">Agent Decision Logic</h5>
+                        <p class="text-dark-200">${currentEvaluationData.decision_reasoning}</p>
+                    </div>
+                    ` : ''}
+                    
+                    ${currentEvaluationData.next_action ? `
+                    <div class="bg-dark-800 p-4 rounded-lg">
+                        <h5 class="text-lg font-semibold text-white mb-2">Recommended Next Action</h5>
+                        <p class="text-primary-300 font-medium">${currentEvaluationData.next_action}</p>
+                    </div>
+                    ` : ''}
+                    
+                    ${currentEvaluationData.strengths && currentEvaluationData.strengths.length > 0 ? `
+                    <div>
+                        <h5 class="text-lg font-semibold text-white mb-2">All Strengths:</h5>
+                        <div class="space-y-2">
+                            ${currentEvaluationData.strengths.map(s => `
+                                <div class="strength-item">
+                                    <p class="text-green-300">${s}</p>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                    ` : ''}
+                    
+                    ${currentEvaluationData.gaps && currentEvaluationData.gaps.length > 0 ? `
+                    <div>
+                        <h5 class="text-lg font-semibold text-white mb-2">All Gaps:</h5>
+                        <div class="space-y-2">
+                            ${currentEvaluationData.gaps.map(g => `
+                                <div class="gap-item">
+                                    <p class="text-yellow-300">${g}</p>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                    ` : ''}
+                    
+                    ${currentEvaluationData.resume_improvements && currentEvaluationData.resume_improvements.length > 0 ? `
+                    <div>
+                        <h5 class="text-lg font-semibold text-white mb-2">Resume Improvements:</h5>
+                        <div class="space-y-2">
+                            ${currentEvaluationData.resume_improvements.map(imp => `
+                                <div class="question-item">
+                                    <p class="text-blue-300">${imp}</p>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                    ` : ''}
+                </div>
+            `;
+
+            modalContent.innerHTML = detailsHtml;
+            document.getElementById('details-modal').classList.add('active');
+        }
+
+        function showStrengthsModal() {
+            if (!currentEvaluationData || !currentEvaluationData.strengths || currentEvaluationData.strengths.length === 0) {
+                showToast("No strengths data available.", "warning");
+                return;
+            }
+            
+            showEvaluationDetails();
+        }
+
+        function showGapsModal() {
+            if (!currentEvaluationData || !currentEvaluationData.gaps || currentEvaluationData.gaps.length === 0) {
+                showToast("No gaps data available.", "warning");
+                return;
+            }
+            
+            showEvaluationDetails();
+        }
+
+        function showInterviewQuestions() {
+            if (!currentEvaluationData || !currentEvaluationData.interview_questions || currentEvaluationData.interview_questions.length === 0) {
+                showToast("No interview questions generated by the agent.", "warning");
+                return;
+            }
+
+            const modal = document.getElementById('questions-modal');
+            const modalContent = document.getElementById('modal-questions-content');
+            
+            if (!modal || !modalContent) return;
+            
+            modal.classList.add('active');
+            
+            modalContent.innerHTML = currentEvaluationData.interview_questions.map((question, index) => `
+                <div class="question-item">
+                    <p class="font-semibold text-primary-300">Question ${index + 1}:</p>
+                    <p class="text-dark-200 mt-1">${question}</p>
+                </div>
+            `).join('');
+        }
+
+        function showLearningRoadmap() {
+            if (!currentEvaluationData || !currentEvaluationData.learning_roadmap || currentEvaluationData.learning_roadmap.length === 0) {
+                showToast("No learning roadmap generated by the agent.", "warning");
+                return;
+            }
+
+            const modal = document.getElementById('roadmap-modal');
+            const modalContent = document.getElementById('modal-roadmap-content');
+            
+            if (!modal || !modalContent) return;
+            
+            modal.classList.add('active');
+            
+            modalContent.innerHTML = `
+                <div class="space-y-4">
+                    <div class="bg-dark-800 p-4 rounded-lg">
+                        <h4 class="text-lg font-bold text-primary-300 mb-2">Personalized Learning Roadmap</h4>
+                        <p class="text-dark-300">Based on your score of ${currentEvaluationData.score_100 || 0}%, the AI agent has created this customized learning plan:</p>
+                    </div>
+                    
+                    <div class="space-y-3">
+                        ${currentEvaluationData.learning_roadmap.map((step, index) => `
+                            <div class="bg-dark-800 p-4 rounded-lg border-l-4 ${index % 2 === 0 ? 'border-green-500' : 'border-blue-500'}">
+                                <div class="flex items-start">
+                                    <div class="w-8 h-8 ${index % 2 === 0 ? 'bg-green-900/30 border-green-800/50' : 'bg-blue-900/30 border-blue-800/50'} rounded-full flex items-center justify-center mr-3 border">
+                                        <span class="${index % 2 === 0 ? 'text-green-300' : 'text-blue-300'} font-bold">${index + 1}</span>
+                                    </div>
+                                    <div class="flex-1">
+                                        <p class="text-white">${step}</p>
+                                    </div>
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+                    
+                    ${currentEvaluationData.confidence_feedback ? `
+                    <div class="bg-dark-800 p-4 rounded-lg">
+                        <h5 class="text-lg font-semibold text-yellow-300 mb-2">Agent Feedback</h5>
+                        <p class="text-dark-200">${currentEvaluationData.confidence_feedback}</p>
+                    </div>
+                    ` : ''}
+                </div>
+            `;
+        }
+
+        // --- Initialization ---
+        document.addEventListener('DOMContentLoaded', () => {
+            updateCharCount('jd-text', 'jd-char-count');
+            updateCharCount('self-jd-text', 'self-jd-char-count');
+            
+            const selfJdText = document.getElementById('self-jd-text');
+            const selfResumeFile = document.getElementById('self-resume-file');
+            
+            if (selfJdText) selfJdText.addEventListener('input', checkSelfEvaluateReadiness);
+            if (selfResumeFile) selfResumeFile.addEventListener('change', checkSelfEvaluateReadiness);
+            
+            // Initialize metrics if on metrics tab
+            if (window.location.hash === '#metrics') {
+                switchTab('metrics');
+            }
+        });
+
+    </script>
+</body>
+</html>
